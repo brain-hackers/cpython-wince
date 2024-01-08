@@ -1,0 +1,54 @@
+name: Build for WindowsCE
+
+on:
+  push:
+    branches: "*"
+  pull_request:
+    branches: "*"
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install CeGCC
+      run: |
+        sudo bash -c 'echo "deb [trusted=yes] https://max.kellermann.name/debian cegcc_buster-default main" > /etc/apt/sources.list.d/gcc-arm-mingw32ce.list'
+        sudo apt update
+        sudo apt install gcc-arm-mingw32ce
+
+    - name: Download Tcl/Tk
+      run: wget https://master.dl.sourceforge.net/project/tcltkce/tcltkce/8.4.6/tcltk846ce-arm.zip?viasf=1 -O tcltk.zip
+
+    - name: Extract Tcl/Tk
+      run: |
+        unzip tcltk.zip
+        mv tcltk846ce-arm/bin/*.dll .
+    
+    - name: Build
+      run: ./ce_build.sh
+
+    - name: Pack
+      run: ./ce_pack.sh
+
+    - name: Upload log
+      uses: actions/upload-artifact@v4
+      with:
+        name: log
+        path: make.log
+
+    - name: Upload zip file
+      uses: actions/upload-artifact@v4
+      with:
+        name: cpython-wince
+        path: wince_build
