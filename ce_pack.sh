@@ -1,3 +1,4 @@
+#!/bin/bash
 
 rm -rf wince_build
 mkdir wince_build
@@ -27,6 +28,6 @@ echo -ne "Lib\npython310.zip\n.\nimport site" > wince_build/libpython3.10._pth
 
 if test -a wince_build/libpython3.10d.dll; then mv wince_build/libpython3.10._pth wince_build/libpython3.10d._pth; fi
 
-#cp tk84.dll tcl84.dll celib.dll wince_build/
+cp -r tk84.dll tcl84.dll celib.dll tcl8.4.3 wince_build/
 
 echo "Done."

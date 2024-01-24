@@ -58,6 +58,7 @@ struct Tcl_Event {
 #define TCL_FINAL_RELEASE   2
 
 #define TCL_VERSION	    "8.4"
+#define TCL_PATCH_LEVEL	"8.4.3"
 #define TCL_OK		    0
 #define TCL_ERROR	    1
 #define TCL_UTF_MAX	    3

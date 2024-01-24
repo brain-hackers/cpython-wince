@@ -1,19 +1,41 @@
-export HOST_ARCH=arm-none-linux-gnu && \
-export TOOL_PREFIX=${TOOL_PREFIX:-/usr/bin/arm-mingw32ce} && \
-export CC=$TOOL_PREFIX-gcc && \
-export CXX=$TOOL_PREFIX-g++ && \
-export CPP="$TOOL_PREFIX-g++ -E" && \
-export AR=$TOOL_PREFIX-ar && \
-export RANLIB=$TOOL_PREFIX-ranlib && \
-export LD=$TOOL_PREFIX-ld && \
-export READELF=$TOOL_PREFIX-readelf && \
-export WINDRES=$TOOL_PREFIX-windres && \
-export LIBS="-lcoredll6 -lcoredll -lm -laygshell -lws2 -lcommctrl" && \
-export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./zlib-src -I./Modules/_ctypes/libffi_arm_wince" && \
-export LDFLAGS="-fno-strict-aliasing" && \
-export CPPFLAGS="-fvisibility=hidden" && \
-export LIBFFI_INCLUDEDIR="Modules/_ctypes/libffi-arm-wince" && \
+#!/bin/bash
+
+export HOST_ARCH=arm-none-linux-gnu
+export TOOL_PREFIX=${TOOL_PREFIX:-/usr/bin/arm-mingw32ce}
+export CC=$TOOL_PREFIX-gcc
+export CXX=$TOOL_PREFIX-g++
+export CPP="$TOOL_PREFIX-g++ -E"
+export AR=$TOOL_PREFIX-ar
+export RANLIB=$TOOL_PREFIX-ranlib
+export LD=$TOOL_PREFIX-ld
+export READELF=$TOOL_PREFIX-readelf
+export WINDRES=$TOOL_PREFIX-windres
+export LIBS="-lcoredll6 -lcoredll -lm -laygshell -lws2 -lcommctrl"
+export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./zlib-src -I./Modules/_ctypes/libffi_arm_wince"
+export LDFLAGS="-fno-strict-aliasing"
+export CPPFLAGS="-fvisibility=hidden"
+export LIBFFI_INCLUDEDIR="Modules/_ctypes/libffi-arm-wince"
 export ZLIBDIR="./zlib-src"
+
+PY_DEBUG='no';
+
+while (( $# > 0 ))
+do
+    case $1 in
+        -d|--debug)
+            PY_DEBUG='yes';
+            ;;
+        -*)
+            echo "unknown option: "$1;
+            exit 1;
+            ;;
+        *)
+            echo "unexpected argument: "$1;
+            exit 1;
+            ;;
+    esac
+    shift
+done
 
 
 build_tkinter='yes' # set 'no' or '' if you do not need tkinter being built.
@@ -37,10 +59,7 @@ if [ ! -d build ]; then
     mkdir build
 fi
 
-echo > make.log
-
-make distclean
-
+touch make.log
 
 ac_cv_pthread_is_default=yes ac_cv_cxx_thread=yes ac_cv_file__dev_ptmx=no ac_cv_file__dev_ptc=no ac_cv_have_long_long_format=yes \
 ac_cv_enable_implicit_function_declaration_error=no \
@@ -52,7 +71,7 @@ ac_cv_enable_implicit_function_declaration_error=no \
 --with-builtin-hashlib-hashes \
 --without-c-locale-coercion \
 --includedir="$PWD/PC" \
---without-pydebug \
+--with-pydebug=$PY_DEBUG \
 --with-tcltk-includes="$TCLTK_INCS" \
 --with-tcltk-libs="$TCLTK_LIBS" \
 --enable-optimizations |& tee make.log -a || err

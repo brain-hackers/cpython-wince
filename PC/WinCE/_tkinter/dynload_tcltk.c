@@ -14,9 +14,9 @@
  *	Possible paths for the TCL and TK dlls
  */
 
-static TCHAR Celib_Dll_Local[MAX_PATH+1] = TEXT("..\\celib.dll");
-static TCHAR TCL_Dll_Local[MAX_PATH+1] = TEXT("..\\tcl84.dll");
-static TCHAR TK_Dll_Local[MAX_PATH+1] = TEXT("..\\tk84.dll");
+static TCHAR Celib_Dll_Local[MAX_PATH+1] = TEXT("celib.dll");
+static TCHAR TCL_Dll_Local[MAX_PATH+1] = TEXT("tcl84.dll");
+static TCHAR TK_Dll_Local[MAX_PATH+1] = TEXT("tk84.dll");
 
 static TCHAR *Celib_Dll[] = {Celib_Dll_Local, TEXT("\\Windows\\celib.dll"), 0};
 static TCHAR *TCL_Dll[] = {TCL_Dll_Local, TEXT("\\Windows\\tcl84.dll"), 0};
@@ -141,7 +141,8 @@ static int Do_Dynamic_Link(void)
 	char Error_String[128];
 
     static int Local_Ready = 0;
-    static Prog_Name[MAX_PATH+1];
+    static wchar_t Prog_Dir[MAX_PATH+1];
+	wchar_t *c;
 
 	static struct {
 		char *Name;
@@ -152,19 +153,24 @@ static int Do_Dynamic_Link(void)
 			    {"TCL",   TCL_Dll,   Tcl_Functions,   (void *)&_Tcl_Dynload},
 			    {"TK",     TK_Dll,   Tk_Functions,    (void *)&_Tk_Dynload}};
 
-    if (Local_Ready == 0) {
-        if (!GetModuleFileName(NULL, Prog_Name, MAX_PATH+1))
-            Local_Ready = -1;
-        else {
-            Local_Ready = 1;
-	        for(i = 0; i < (sizeof(Load)/sizeof(Load[0])); i++) {
-                if (PathCchCombineEx(*(Load[i].Dll), MAX_PATH+1, Prog_Name, *(Load[i].Dll), 0) != S_OK) {
-                    Local_Ready = -1;
-                    break;
-                }
-            }
-        }
-    }
+	if (Local_Ready == 0) {
+		if (!GetModuleFileName(NULL, Prog_Dir, MAX_PATH+1))
+			Local_Ready = -1;
+		else {
+			c = wcsrchr(Prog_Dir, L'\\');
+			if (c != NULL)
+				*c = L'\0';
+			else
+				Prog_Dir[0] = L'\0';
+			Local_Ready = 1;
+			for(i = 0; i < (sizeof(Load)/sizeof(Load[0])); i++) {
+				if (PathCchCombineEx(*(Load[i].Dll), MAX_PATH+1, Prog_Dir, *(Load[i].Dll), 0) != S_OK) {
+					Local_Ready = -1;
+					break;
+				}
+			}
+		}
+	}
 	/*
 	 *	Do the dynamic loading
 	 */

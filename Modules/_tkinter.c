@@ -156,36 +156,6 @@ _get_tcl_lib_path()
             /* install location doesn't exist, reset errno and see if
                we're a repository build */
             errno = 0;
-#ifdef MS_WINCE
-            if (!GetModuleFileName(NULL, python_dir, MAX_PATH+1))
-                return NULL;
-            c = wcsrchr(python_dir, L'\\');
-            if (c == NULL)
-                prefix = PyUnicode_FromWideChar(L"", -1);
-            else {
-                *c = L'\0';
-                prefix = PyUnicode_FromWideChar(python_dir, -1);
-            }
-            if (prefix != NULL) {
-                tcl_library_path = PyUnicode_FromString("\\lib\\tcl" TCL_VERSION);
-                if (tcl_library_path == NULL)
-                    return NULL;
-                tcl_library_path = PyUnicode_Concat(prefix, tcl_library_path);
-                if (tcl_library_path == NULL)
-                    return NULL;
-                stat_return_value = _Py_stat(tcl_library_path, &stat_buf);
-                if (stat_return_value == -2) {
-                    return NULL;
-                }
-                if (stat_return_value == -1) {
-                    /* install location doesn't exist, reset errno and see if
-                       we're a repository build */
-                    errno = 0;
-                }
-            } else {
-                return NULL;
-            }
-#endif
 #ifdef Py_TCLTK_DIR
             tcl_library_path = PyUnicode_FromString(
                                     Py_TCLTK_DIR "\\lib\\tcl" TCL_VERSION);
@@ -204,6 +174,40 @@ _get_tcl_lib_path()
             }
 #else
             tcl_library_path = NULL;
+#endif
+#ifdef MS_WINCE
+            if (tcl_library_path == NULL) {
+                if (!GetModuleFileName(NULL, python_dir, MAX_PATH+1)) {
+                    return NULL;
+                }
+                c = wcsrchr(python_dir, L'\\');
+                if (c == NULL) {
+                    prefix = PyUnicode_FromWideChar(L"", -1);
+                } else {
+                    *c = L'\0';
+                    prefix = PyUnicode_FromWideChar(python_dir, -1);
+                }
+                if (prefix != NULL) {
+                    tcl_library_path = PyUnicode_FromString("\\tcl" TCL_PATCH_LEVEL "\\library");
+                    if (tcl_library_path == NULL)
+                        return NULL;
+                    tcl_library_path = PyUnicode_Concat(prefix, tcl_library_path);
+                    if (tcl_library_path == NULL)
+                        return NULL;
+                    stat_return_value = _Py_stat(tcl_library_path, &stat_buf);
+                    if (stat_return_value == -2) {
+                        return NULL;
+                    }
+                    if (stat_return_value == -1) {
+                        /* install location doesn't exist, reset errno and see if
+                           we're a repository build */
+                        tcl_library_path = NULL;
+                        errno = 0;
+                    }
+                } else {
+                    return NULL;
+                }
+            }
 #endif
         }
         already_checked = 1;

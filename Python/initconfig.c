@@ -2213,7 +2213,7 @@ config_init_stdio(const PyConfig *config)
 {
 #if defined(MS_WINDOWS) || defined(__CYGWIN__)
     /* don't translate newlines (\r\n <=> \n) */
-    _setmode(fileno(stdin), O_BINARY);
+    _setmode((int)_fileno(stdin), O_BINARY);
     _setmode(fileno(stdout), O_BINARY);
     _setmode(fileno(stderr), O_BINARY);
 #endif

@@ -1165,16 +1165,16 @@ if test $enable_shared = "yes"; then
   AC_DEFINE(Py_ENABLE_SHARED, 1, [Defined if Python is built as a shared library.])
   case $ac_sys_system in
     CYGWIN*)
-      LDLIBRARY='libpython$(LDVERSION).dll.a'
-      DLLLIBRARY='libpython$(LDVERSION).dll'
-      ;;
+          LDLIBRARY='libpython$(LDVERSION).dll.a'
+          DLLLIBRARY='libpython$(LDVERSION).dll'
+          ;;
     WinCE*)
-      LDLIBRARY='libpython$(LDVERSION).dll.a'
-      DLLLIBRARY='libpython$(LDVERSION).dll'
-      if test ! $WINDRES = ""; then
-        BLDLIBRARY='$(LDLIBRARY) PC/python_exe.o'
-      fi
-      ;;
+	     LDLIBRARY='libpython$(LDVERSION).dll.a'
+	     DLLLIBRARY='libpython$(LDVERSION).dll'
+	     if test ! $WINDRES = ""; then
+	         BLDLIBRARY='$(LDLIBRARY) PC/python_exe.o'
+	     fi
+	     ;;
     SunOS*)
 	  LDLIBRARY='libpython$(LDVERSION).so'
 	  BLDLIBRARY='-Wl,-R,$(LIBDIR) -L. -lpython$(LDVERSION)'
@@ -1208,14 +1208,14 @@ if test $enable_shared = "yes"; then
 	  RUNSHARED=SHLIB_PATH=`pwd`${SHLIB_PATH:+:${SHLIB_PATH}}
 	  ;;
     Darwin*)
-      LDLIBRARY='libpython$(LDVERSION).dylib'
-	  BLDLIBRARY='-L. -lpython$(LDVERSION)'
-	  RUNSHARED=DYLD_LIBRARY_PATH=`pwd`${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}
-	  ;;
+    	LDLIBRARY='libpython$(LDVERSION).dylib'
+	BLDLIBRARY='-L. -lpython$(LDVERSION)'
+	RUNSHARED=DYLD_LIBRARY_PATH=`pwd`${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}
+	;;
     AIX*)
-	  LDLIBRARY='libpython$(LDVERSION).so'
-	  RUNSHARED=LIBPATH=`pwd`${LIBPATH:+:${LIBPATH}}
-	  ;;
+	LDLIBRARY='libpython$(LDVERSION).so'
+	RUNSHARED=LIBPATH=`pwd`${LIBPATH:+:${LIBPATH}}
+	;;
   esac
 else # shared is disabled
   PY_ENABLE_SHARED=0

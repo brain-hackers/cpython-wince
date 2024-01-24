@@ -25,74 +25,74 @@ typedef long HRESULT;
 #define PY3_DLLNAME L"libpython3.10.dll"
 
 /* locale emulation */
-#define	LC_ALL		0
-#define LC_COLLATE	1
-#define LC_CTYPE	2
-#define	LC_MONETARY	3
-#define	LC_NUMERIC	4
-#define	LC_TIME		5
-#define	LC_MIN		LC_ALL
-#define	LC_MAX		LC_TIME
+#define LC_ALL 0
+#define LC_COLLATE 1
+#define LC_CTYPE 2
+#define LC_MONETARY 3
+#define LC_NUMERIC 4
+#define LC_TIME 5
+#define LC_MIN LC_ALL
+#define LC_MAX LC_TIME
 
 /* FIXME: this file is included before pyport.h so we can't use PyAPI_FUNC() */
 #ifdef Py_BUILD_CORE
-#	define WINCE_PyAPI_FUNC(RTYPE) __declspec(dllexport) RTYPE
-#	define WINCE_PyAPI_DATA(RTYPE) extern __declspec(dllexport) RTYPE
+#define WINCE_PyAPI_FUNC(RTYPE) __declspec(dllexport) RTYPE
+#define WINCE_PyAPI_DATA(RTYPE) extern __declspec(dllexport) RTYPE
 #else
-#	define WINCE_PyAPI_FUNC(RTYPE) __declspec(dllimport) RTYPE
-#	define WINCE_PyAPI_DATA(RTYPE) extern __declspec(dllimport) RTYPE
+#define WINCE_PyAPI_FUNC(RTYPE) __declspec(dllimport) RTYPE
+#define WINCE_PyAPI_DATA(RTYPE) extern __declspec(dllimport) RTYPE
 #endif
 
 /* errno emulation */
 
-#define EPERM		1	/* Operation not permitted */
-#define	ENOFILE		2	/* No such file or directory */
-#define	ENOENT		2
-#define	ESRCH		3	/* No such process */
-#define	EINTR		4	/* Interrupted function call */
-#define	EIO		5	/* Input/output error */
-#define	ENXIO		6	/* No such device or address */
-#define	E2BIG		7	/* Arg list too long */
-#define	ENOEXEC		8	/* Exec format error */
-#define	EBADF		9	/* Bad file descriptor */
-#define	ECHILD		10	/* No child processes */
-#define	EAGAIN		11	/* Resource temporarily unavailable */
-#define	ENOMEM		12	/* Not enough space */
-#define	EACCES		13	/* Permission denied */
-#define	EFAULT		14	/* Bad address */
+#define EPERM 1   /* Operation not permitted */
+#define ENOFILE 2 /* No such file or directory */
+#define ENOENT 2
+#define ESRCH 3   /* No such process */
+#define EINTR 4   /* Interrupted function call */
+#define EIO 5     /* Input/output error */
+#define ENXIO 6   /* No such device or address */
+#define E2BIG 7   /* Arg list too long */
+#define ENOEXEC 8 /* Exec format error */
+#define EBADF 9   /* Bad file descriptor */
+#define ECHILD 10 /* No child processes */
+#define EAGAIN 11 /* Resource temporarily unavailable */
+#define ENOMEM 12 /* Not enough space */
+#define EACCES 13 /* Permission denied */
+#define EFAULT 14 /* Bad address */
 /* 15 - Unknown Error */
-#define	EBUSY		16	/* strerror reports "Resource device" */
-#define	EEXIST		17	/* File exists */
-#define	EXDEV		18	/* Improper link (cross-device link?) */
-#define	ENODEV		19	/* No such device */
-#define	ENOTDIR		20	/* Not a directory */
-#define	EISDIR		21	/* Is a directory */
-#define	EINVAL		22	/* Invalid argument */
-#define	ENFILE		23	/* Too many open files in system */
-#define	EMFILE		24	/* Too many open files */
-#define	ENOTTY		25	/* Inappropriate I/O control operation */
+#define EBUSY 16   /* strerror reports "Resource device" */
+#define EEXIST 17  /* File exists */
+#define EXDEV 18   /* Improper link (cross-device link?) */
+#define ENODEV 19  /* No such device */
+#define ENOTDIR 20 /* Not a directory */
+#define EISDIR 21  /* Is a directory */
+#define EINVAL 22  /* Invalid argument */
+#define ENFILE 23  /* Too many open files in system */
+#define EMFILE 24  /* Too many open files */
+#define ENOTTY 25  /* Inappropriate I/O control operation */
 /* 26 - Unknown Error */
-#define	EFBIG		27	/* File too large */
-#define	ENOSPC		28	/* No space left on device */
-#define	ESPIPE		29	/* Invalid seek (seek on a pipe?) */
-#define	EROFS		30	/* Read-only file system */
-#define	EMLINK		31	/* Too many links */
-#define	EPIPE		32	/* Broken pipe */
-#define	EDOM		33	/* Domain error (math functions) */
-#define	ERANGE		34	/* Result too large (possibly too small) */
+#define EFBIG 27  /* File too large */
+#define ENOSPC 28 /* No space left on device */
+#define ESPIPE 29 /* Invalid seek (seek on a pipe?) */
+#define EROFS 30  /* Read-only file system */
+#define EMLINK 31 /* Too many links */
+#define EPIPE 32  /* Broken pipe */
+#define EDOM 33   /* Domain error (math functions) */
+#define ERANGE 34 /* Result too large (possibly too small) */
 /* 35 - Unknown Error */
-#define	EDEADLOCK	36	/* Resource deadlock avoided (non-Cyg) */
-#define	EDEADLK		36
+#define EDEADLOCK 36 /* Resource deadlock avoided (non-Cyg) */
+#define EDEADLK 36
 /* 37 - Unknown Error */
-#define	ENAMETOOLONG	38	/* Filename too long (91 in Cyg?) */
-#define	ENOLCK		39	/* No locks available (46 in Cyg?) */
-#define	ENOSYS		40	/* Function not implemented (88 in Cyg?) */
-#define	ENOTEMPTY	41	/* Directory not empty (90 in Cyg?) */
-#define	EILSEQ		42	/* Illegal byte sequence */
+#define ENAMETOOLONG 38 /* Filename too long (91 in Cyg?) */
+#define ENOLCK 39       /* No locks available (46 in Cyg?) */
+#define ENOSYS 40       /* Function not implemented (88 in Cyg?) */
+#define ENOTEMPTY 41    /* Directory not empty (90 in Cyg?) */
+#define EILSEQ 42       /* Illegal byte sequence */
 
-#define ECONVERT	43	/* Convert error (FIXME-WINCE: Icouldn't find the correct value */
+#define ECONVERT 43 /* Convert error (FIXME-WINCE: Icouldn't find the correct value */
 
-#define	EWOULDBLOCK	EAGAIN	/* Operation would block */
+#define EWOULDBLOCK EAGAIN /* Operation would block */
 
 /*
  * Because we need a per-thread errno, we define a function
@@ -111,25 +111,24 @@ typedef long HRESULT;
 #endif
 void wince_errno_new_thread(int *errno_pointer);
 void wince_errno_thread_exit(void);
-int *(*wince_errno_pointer_function)(void);
-#define	errno (*(*wince_errno_pointer_function)())
+WINCE_PyAPI_DATA(int) * (*wince_errno_pointer_function)(void);
+#define errno (*(*wince_errno_pointer_function)())
 
 #define _errno errno
 
 extern int _sys_nerr;
 extern const char *_sys_errlist[];
 
-
 /* signal.h */
-#define	SIGINT		2	/* Interactive attention */
-#define	SIGILL		4	/* Illegal instruction */
-#define	SIGFPE		8	/* Floating point error */
-#define	SIGSEGV		11	/* Segmentation violation */
-#define	SIGTERM		15	/* Termination request */
-#define SIGBREAK	21	/* Control-break */
-#define	SIGABRT		22	/* Abnormal termination (abort) */
+#define SIGINT 2    /* Interactive attention */
+#define SIGILL 4    /* Illegal instruction */
+#define SIGFPE 8    /* Floating point error */
+#define SIGSEGV 11  /* Segmentation violation */
+#define SIGTERM 15  /* Termination request */
+#define SIGBREAK 21 /* Control-break */
+#define SIGABRT 22  /* Abnormal termination (abort) */
 
-#define NSIG 23     /* maximum signal number + 1 */
+#define NSIG 23 /* maximum signal number + 1 */
 
 #define SetErrorMode(m) (0)
 #define GetErrorMode() (0)
@@ -144,7 +143,7 @@ extern const char *_sys_errlist[];
 
 unsigned long getVersion();
 
-void* SecureZeroMemory(void* ptr, size_t cnt);
+void *SecureZeroMemory(void *ptr, size_t cnt);
 
 double copysign(double x, double y);
 
@@ -153,7 +152,7 @@ double copysign(double x, double y);
 #define C3_LOWSURROGATE 0x1000
 
 #define FILE_FLAG_FIRST_PIPE_INSTANCE 0x00080000
-#define FILE_MAP_EXECUTE  0x00000020
+#define FILE_MAP_EXECUTE 0x00000020
 #define PAGE_WRITECOMBINE 0x00000400
 #define SEC_LARGE_PAGES 0x80000000
 #define SEC_WRITECOMBINE 0x40000000
@@ -175,32 +174,36 @@ double copysign(double x, double y);
 #define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS 0x00001000
 
 typedef struct _PROC_THREAD_ATTRIBUTE_ENTRY {
-	unsigned long*	Attribute;
-	size_t  		cbSize;
-	void*	    	lpValue;
+    unsigned long *Attribute;
+    size_t cbSize;
+    void *lpValue;
 } PROC_THREAD_ATTRIBUTE_ENTRY, *LPPROC_THREAD_ATTRIBUTE_ENTRY;
 
 typedef struct _LPPROC_THREAD_ATTRIBUTE_LIST {
-	unsigned long				dwFlags;
-	unsigned long				Size;
-	unsigned long				Count;
-	unsigned long				Reserved;
-	unsigned long*				Unknown;
-	PROC_THREAD_ATTRIBUTE_ENTRY	Entries[1];
+    unsigned long dwFlags;
+    unsigned long Size;
+    unsigned long Count;
+    unsigned long Reserved;
+    unsigned long *Unknown;
+    PROC_THREAD_ATTRIBUTE_ENTRY Entries[1];
 } PROC_THREAD_ATTRIBUTE_LIST, *LPPROC_THREAD_ATTRIBUTE_LIST;
 
 typedef struct _STARTUPINFOEXW {
-	STARTUPINFOW			        StartupInfo;
-	LPPROC_THREAD_ATTRIBUTE_LIST	lpAttributeList;
+    STARTUPINFOW StartupInfo;
+    LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
 } STARTUPINFOEXW, *LPSTARTUPINFOEXW;
 
 typedef struct _FILE_ATTRIBUTE_TAG_INFO {
-	unsigned long	FileAttributes;
-	unsigned long	ReparseTag;
+    unsigned long FileAttributes;
+    unsigned long ReparseTag;
 } FILE_ATTRIBUTE_TAG_INFO, *PFILE_ATTRIBUTE_TAG_INFO;
 
-int InitializeProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList, unsigned long dwAttributeCount, unsigned long dwFlags, size_t* lpSize);
-int UpdateProcThreadAttribute(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList, unsigned long dwFlags, unsigned long* Attribute, void* lpValue, size_t cbSize, void* lpPreviousValue, size_t* lpReturnSize);
+int InitializeProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
+                                      unsigned long dwAttributeCount, unsigned long dwFlags,
+                                      size_t *lpSize);
+int UpdateProcThreadAttribute(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList, unsigned long dwFlags,
+                              unsigned long *Attribute, void *lpValue, size_t cbSize,
+                              void *lpPreviousValue, size_t *lpReturnSize);
 void DeleteProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList);
 
 #ifndef wcsnlen /* FIXME-WINCE: CEGCC does not define wcsnlen. I wonder why. */
@@ -210,9 +213,9 @@ size_t wcsnlen(const wchar_t *str, size_t numberOfElements);
 int wcscat_s(wchar_t *strDestination, size_t numberOfElements, const wchar_t *strSource);
 
 #define _chsize_s _chsize
-#define wcscpy_s(dest,size,src) (wcscpy(dest,src))
-#define wcsncpy_s(d,n,s,c) (wcsncpy(d,s,c))
-#define wcsnlen_s(str, num) str==NULL?0:wcsnlen(str, num)
+#define wcscpy_s(dest, size, src) (wcscpy(dest, src))
+#define wcsncpy_s(d, n, s, c) (wcsncpy(d, s, c))
+#define wcsnlen_s(str, num) str == NULL ? 0 : wcsnlen(str, num)
 #define wcsncasecmp _wcsnicmp
 #define wcstok_s wcstok
 #define memcpy_s(d, ds, s, c) (memcpy(d, s, c))
@@ -221,11 +224,11 @@ int _heapmin(void);
 
 double copysign(double x, double y);
 
-#define	_LK_UNLCK	0	/* Unlock */
-#define	_LK_LOCK	1	/* Lock */
-#define	_LK_NBLCK	2	/* Non-blocking lock */
-#define	_LK_RLCK	3	/* Lock for read only */
-#define	_LK_NBRLCK	4	/* Non-blocking lock for read only */
+#define _LK_UNLCK 0  /* Unlock */
+#define _LK_LOCK 1   /* Lock */
+#define _LK_NBLCK 2  /* Non-blocking lock */
+#define _LK_RLCK 3   /* Lock for read only */
+#define _LK_NBRLCK 4 /* Non-blocking lock for read only */
 
 int _locking(int fd, int mode, long nbytes);
 
@@ -264,18 +267,22 @@ int _locking(int fd, int mode, long nbytes);
 
 #define AdjustPrivileges(h, d, n, l, p, r) (0)
 
-wchar_t **CommandLineToArgvW(const wchar_t* lpCmdLine, int* pNumArgs);
+wchar_t **CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs);
 
 /* pathcch.h emulation */
 
 #define PATHCCH_NONE 0
 #define PATHCCH_ALLOW_LONG_PATHS 1
 
-#define PATHCCH_E_FILENAME_TOO_LONG ((HRESULT)0x8000FFFFL) /* FIXME-WINCE: could not find its actual value */
+#define PATHCCH_E_FILENAME_TOO_LONG \
+    ((HRESULT)0x8000FFFFL) /* FIXME-WINCE: could not find its actual value */
 
-WINCE_PyAPI_FUNC(HRESULT) PathCchCanonicalizeEx(wchar_t *pszPathOut, size_t cchPathOut, wchar_t *pszPathIn, unsigned long dwFlags);
-WINCE_PyAPI_FUNC(HRESULT) PathCchCombineEx(wchar_t *pszPathOut, size_t cchPathOut, wchar_t *pszPathIn, wchar_t *pszMore, unsigned long dwFlags);
-WINCE_PyAPI_FUNC(HRESULT) PathCchSkipRoot(wchar_t *pszPath, wchar_t* *ppszRootEnd);
+WINCE_PyAPI_FUNC(HRESULT) PathCchCanonicalizeEx(wchar_t *pszPathOut, size_t cchPathOut,
+                                                wchar_t *pszPathIn, unsigned long dwFlags);
+WINCE_PyAPI_FUNC(HRESULT)
+    PathCchCombineEx(wchar_t *pszPathOut, size_t cchPathOut, wchar_t *pszPathIn, wchar_t *pszMore,
+                     unsigned long dwFlags);
+WINCE_PyAPI_FUNC(HRESULT) PathCchSkipRoot(wchar_t *pszPath, wchar_t **ppszRootEnd);
 
 /* namedpipe emulation ( not emulation though ) */
 
@@ -294,32 +301,30 @@ WINCE_PyAPI_FUNC(HRESULT) PathCchSkipRoot(wchar_t *pszPath, wchar_t* *ppszRootEn
  * detect overflow (this is tested by test.test_builtin)
  */
 extern unsigned char wince_positive_double_infinity[];
-#define	Py_HUGE_VAL (*(double *)wince_positive_double_infinity)
-
+#define Py_HUGE_VAL (*(double *)wince_positive_double_infinity)
 
 /* Time functions */
 
 #define _TM_DEFINED
 
-struct tm
-{
-	int	tm_sec;		/* Seconds: 0-59 */
-	int	tm_min;		/* Minutes: 0-59 */
-	int	tm_hour;	/* Hours since midnight: 0-23 */
-	int	tm_mday;	/* Day of the month: 1-31 */
-	int	tm_mon;		/* Months *since* january: 0-11 */
-	int	tm_year;	/* Years since 1900 */
-	int	tm_wday;	/* Days since Sunday (0-6) */
-	int	tm_yday;	/* Days since Jan. 1: 0-365 */
-	int	tm_isdst;	/* +1 Daylight Savings Time, 0 No DST,
-				 * -1 don't know */
+struct tm {
+    int tm_sec;   /* Seconds: 0-59 */
+    int tm_min;   /* Minutes: 0-59 */
+    int tm_hour;  /* Hours since midnight: 0-23 */
+    int tm_mday;  /* Day of the month: 1-31 */
+    int tm_mon;   /* Months *since* january: 0-11 */
+    int tm_year;  /* Years since 1900 */
+    int tm_wday;  /* Days since Sunday (0-6) */
+    int tm_yday;  /* Days since Jan. 1: 0-365 */
+    int tm_isdst; /* +1 Daylight Savings Time, 0 No DST,
+                   * -1 don't know */
 };
 typedef long clock_t;
 
 clock_t clock(void);
 
 #ifndef _TIME_T_DEFINED
-typedef	long	time_t;
+typedef long time_t;
 #define _TIME_T_DEFINED
 #endif
 
@@ -336,7 +341,6 @@ extern int daylight;
 
 void tzset(void);
 
-
 /* File & directory APIs */
 
 #define FILE_TYPE_UNKNOWN 0
@@ -347,32 +351,31 @@ void tzset(void);
 
 #undef GetFileType
 
-int wince_GetFileType(void* handle);
+int wince_GetFileType(void *handle);
 
 #define GetFileType wince_GetFileType
 
-#define	_O_RDWR		(1<<0)
-#define	_O_RDONLY	(2<<0)
-#define	_O_WRONLY	(3<<0)
-#define	_O_MODE_MASK	(3<<0)
-#define	_O_TRUNC	(1<<2)
-#define	_O_EXCL		(1<<3)
-#define	_O_CREAT	(1<<4)
+#define _O_RDWR (1 << 0)
+#define _O_RDONLY (2 << 0)
+#define _O_WRONLY (3 << 0)
+#define _O_MODE_MASK (3 << 0)
+#define _O_TRUNC (1 << 2)
+#define _O_EXCL (1 << 3)
+#define _O_CREAT (1 << 4)
 
-#define	O_RDWR _O_RDWR
-#define	O_RDONLY _O_RDONLY
-#define	O_WRONLY _O_WRONLY
-#define	O_MODE_MASK _O_MODE_MASK
-#define	O_TRUNC _O_TRUNC
-#define	O_EXCL _O_EXCL
-#define	O_CREAT _O_CREAT
+#define O_RDWR _O_RDWR
+#define O_RDONLY _O_RDONLY
+#define O_WRONLY _O_WRONLY
+#define O_MODE_MASK _O_MODE_MASK
+#define O_TRUNC _O_TRUNC
+#define O_EXCL _O_EXCL
+#define O_CREAT _O_CREAT
 #define O_BINARY _O_BINARY
 
 #define fopen wince_fopen
 WINCE_PyAPI_FUNC(FILE *) wince_fopen(const char *filename, const char *mode);
 #define _wfopen wince_wfopen
 WINCE_PyAPI_FUNC(FILE *) wince_wfopen(const wchar_t *filename, const wchar_t *mode);
-
 
 int _wopen(const wchar_t *filename, int oflag, ...);
 int _open(const char *filename, int oflag, ...);
@@ -395,7 +398,7 @@ int _dup(int fd);
 #define read _read
 #define lseek _lseek
 
-#define	rewind(f) fseek((f), 0, SEEK_SET)
+#define rewind(f) fseek((f), 0, SEEK_SET)
 
 /* Windows CE has no CreateHard/SymbolicLink functions.
  * It seems true that no hard links in WinCE,
@@ -405,9 +408,9 @@ int _dup(int fd);
 #define CreateSymbolicLink CreateSymbolicLinkW
 
 /* These STDIO internal constants are used by fileobject */
-#define	_IOFBF 0
-#define	_IONBF 4
-#define	_IOLBF 64
+#define _IOFBF 0
+#define _IONBF 4
+#define _IOLBF 64
 
 #define _get_osfhandle(fd) ((HANDLE)fd)
 
@@ -417,50 +420,50 @@ int _link(const char *from, const char *to);
 int _unlink(const char *path);
 #define unlink _unlink
 
-#define	_S_IFIFO	0x1000	/* FIFO */
-#define	_S_IFCHR	0x2000	/* Character */
-#define	_S_IFBLK	0x3000	/* Block */
-#define	_S_IFDIR	0x4000	/* Directory */
-#define	_S_IFREG	0x8000	/* Regular */
+#define _S_IFIFO 0x1000 /* FIFO */
+#define _S_IFCHR 0x2000 /* Character */
+#define _S_IFBLK 0x3000 /* Block */
+#define _S_IFDIR 0x4000 /* Directory */
+#define _S_IFREG 0x8000 /* Regular */
 
-#define	_S_IFMT		0xF000	/* File type mask */
+#define _S_IFMT 0xF000 /* File type mask */
 
-#define	_S_IEXEC	0x0040
-#define	_S_IWRITE	0x0080
-#define	_S_IREAD	0x0100
+#define _S_IEXEC 0x0040
+#define _S_IWRITE 0x0080
+#define _S_IREAD 0x0100
 
-#define	_S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)
-#define	_S_IXUSR	_S_IEXEC
-#define	_S_IWUSR	_S_IWRITE
-#define	_S_IRUSR	_S_IREAD
+#define _S_IRWXU (_S_IREAD | _S_IWRITE | _S_IEXEC)
+#define _S_IXUSR _S_IEXEC
+#define _S_IWUSR _S_IWRITE
+#define _S_IRUSR _S_IREAD
 
-#define	_S_ISDIR(m)	(((m) & _S_IFMT) == _S_IFDIR)
-#define	_S_ISFIFO(m)	(((m) & _S_IFMT) == _S_IFIFO)
-#define	_S_ISCHR(m)	(((m) & _S_IFMT) == _S_IFCHR)
-#define	_S_ISBLK(m)	(((m) & _S_IFMT) == _S_IFBLK)
-#define	_S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)
+#define _S_ISDIR(m) (((m)&_S_IFMT) == _S_IFDIR)
+#define _S_ISFIFO(m) (((m)&_S_IFMT) == _S_IFIFO)
+#define _S_ISCHR(m) (((m)&_S_IFMT) == _S_IFCHR)
+#define _S_ISBLK(m) (((m)&_S_IFMT) == _S_IFBLK)
+#define _S_ISREG(m) (((m)&_S_IFMT) == _S_IFREG)
 
-#define	S_IFIFO		_S_IFIFO
-#define	S_IFCHR		_S_IFCHR
-#define	S_IFBLK		_S_IFBLK
-#define	S_IFDIR		_S_IFDIR
-#define	S_IFREG		_S_IFREG
-#define	S_IFMT		_S_IFMT
-#define	S_IEXEC		_S_IEXEC
-#define	S_IWRITE	_S_IWRITE
-#define	S_IREAD		_S_IREAD
-#define	S_IRWXU		_S_IRWXU
-#define	S_IXUSR		_S_IXUSR
-#define	S_IWUSR		_S_IWUSR
-#define	S_IRUSR		_S_IRUSR
+#define S_IFIFO _S_IFIFO
+#define S_IFCHR _S_IFCHR
+#define S_IFBLK _S_IFBLK
+#define S_IFDIR _S_IFDIR
+#define S_IFREG _S_IFREG
+#define S_IFMT _S_IFMT
+#define S_IEXEC _S_IEXEC
+#define S_IWRITE _S_IWRITE
+#define S_IREAD _S_IREAD
+#define S_IRWXU _S_IRWXU
+#define S_IXUSR _S_IXUSR
+#define S_IWUSR _S_IWUSR
+#define S_IRUSR _S_IRUSR
 
-#define	S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)
-#define	S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)
-#define	S_ISCHR(m)	(((m) & S_IFMT) == S_IFCHR)
-#define	S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)
-#define	S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
+#define S_ISDIR(m) (((m)&S_IFMT) == S_IFDIR)
+#define S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
+#define S_ISCHR(m) (((m)&S_IFMT) == S_IFCHR)
+#define S_ISBLK(m) (((m)&S_IFMT) == S_IFBLK)
+#define S_ISREG(m) (((m)&S_IFMT) == S_IFREG)
 
-//typedef unsigned int _dev_t;
+// typedef unsigned int _dev_t;
 typedef short _dev_t;
 typedef short _ino_t;
 typedef unsigned short _mode_t;
@@ -471,20 +474,19 @@ typedef long _off_t;
 #undef _stat
 #undef _fstat
 
-struct _stat
-{
-	_dev_t	st_dev;		/* Equivalent to drive number 0=A 1=B ... */
-	_ino_t	st_ino;		/* Always zero ? */
-	_mode_t	st_mode;	/* See above constants */
-	short	st_nlink;	/* Number of links. */
-	short	st_uid;		/* User: Maybe significant on NT ? */
-	short	st_gid;		/* Group: Ditto */
-	_dev_t	st_rdev;	/* Seems useless (not even filled in) */
-	_off_t	st_size;	/* File size in bytes */
-	time_t	st_atime;	/* Accessed date (always 00:00 hrs local
-				 * on FAT) */
-	time_t	st_mtime;	/* Modified time */
-	time_t	st_ctime;	/* Creation time */
+struct _stat {
+    _dev_t st_dev;   /* Equivalent to drive number 0=A 1=B ... */
+    _ino_t st_ino;   /* Always zero ? */
+    _mode_t st_mode; /* See above constants */
+    short st_nlink;  /* Number of links. */
+    short st_uid;    /* User: Maybe significant on NT ? */
+    short st_gid;    /* Group: Ditto */
+    _dev_t st_rdev;  /* Seems useless (not even filled in) */
+    _off_t st_size;  /* File size in bytes */
+    time_t st_atime; /* Accessed date (always 00:00 hrs local
+                      * on FAT) */
+    time_t st_mtime; /* Modified time */
+    time_t st_ctime; /* Creation time */
 };
 
 int _fstat(int handle, struct _stat *buffer);
@@ -496,15 +498,15 @@ int _wstat(const wchar_t *path, struct _stat *buffer);
 
 /* Current directory APIs */
 
-char* _getcwd (char*, int);
+char *_getcwd(char *, int);
 #define getcwd _getcwd
-wchar_t* _wgetcwd(wchar_t *buffer, int maxlen);
+wchar_t *_wgetcwd(wchar_t *buffer, int maxlen);
 
 typedef int BOOL;
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
-#ifndef  _PICKLE_COMPILING
+#ifndef _PICKLE_COMPILING
 typedef long LONG;
 #endif
 
@@ -530,26 +532,25 @@ size_t strxfrm(char *dest, char *src, size_t n);
 
 #define _LCONV_DEFINED
 
-struct lconv
-{
-	char*	decimal_point;
-	char*	thousands_sep;
-	char*	grouping;
-	char*	int_curr_symbol;
-	char*	currency_symbol;
-	char*	mon_decimal_point;
-	char*	mon_thousands_sep;
-	char*	mon_grouping;
-	char*	positive_sign;
-	char*	negative_sign;
-	char	int_frac_digits;
-	char	frac_digits;
-	char	p_cs_precedes;
-	char	p_sep_by_space;
-	char	n_cs_precedes;
-	char	n_sep_by_space;
-	char	p_sign_posn;
-	char	n_sign_posn;
+struct lconv {
+    char *decimal_point;
+    char *thousands_sep;
+    char *grouping;
+    char *int_curr_symbol;
+    char *currency_symbol;
+    char *mon_decimal_point;
+    char *mon_thousands_sep;
+    char *mon_grouping;
+    char *positive_sign;
+    char *negative_sign;
+    char int_frac_digits;
+    char frac_digits;
+    char p_cs_precedes;
+    char p_sep_by_space;
+    char n_cs_precedes;
+    char n_sep_by_space;
+    char p_sign_posn;
+    char n_sign_posn;
 };
 
 char *setlocale(int category, const char *locale);
@@ -568,15 +569,14 @@ int GetLocaleInfoA(DWORD lcid, DWORD lctype, char *buf, int buf_size);
  * can compensate for Windows CE misclassification of EOF
  */
 WINCE_PyAPI_FUNC(int) wince_isctype(int ch, int classification);
-#define	_isctype	wince_isctype
+#define _isctype wince_isctype
 
-
-/* 
+/*
  * These two functions are only used in sysmodule.c but will never
  * be called because isatty() always returns false
  */
-#define	GetConsoleCP() (0)
-#define	GetConsoleOutputCP() (0)
+#define GetConsoleCP() (0)
+#define GetConsoleOutputCP() (0)
 
 #define SetConsoleCtrlHandler(h, a) /* dummy */
 #define GenerateConsoleCtrlEvent(e, g) (0)
@@ -588,7 +588,7 @@ WINCE_PyAPI_FUNC(int) wince_isctype(int ch, int classification);
 
 /* Signals are not supported, so do nothing and succeed */
 #define raise(num) (0)
-#define	signal(num, handler) (0)
+#define signal(num, handler) (0)
 #define SIG_ERR ((void *)(-1))
 #define SIG_DFL ((void *)(0))
 #define SIG_IGN ((void *)(1))
@@ -596,7 +596,8 @@ WINCE_PyAPI_FUNC(int) wince_isctype(int ch, int classification);
 #define SIGINT 0
 
 /* Environment variables are not supported */
-#define GetEnvironmentVariable(name, buf, size) (0)
+WINCE_PyAPI_FUNC(DWORD) wince_GetEnvironmentVariable();
+#define GetEnvironmentVariable(name, buf, size) wince_GetEnvironmentVariable()
 #define GetEnvironmentVariableW GetEnvironmentVariable
 /* When setting environment variables, do nothing and succeed */
 #define SetEnvironmentVariableA(n, v) (TRUE)
@@ -611,28 +612,37 @@ typedef struct HINSTANCE__ *HINSTANCE;
 typedef struct HWND__ *HWND;
 typedef struct HKEY__ *HKEY;
 
-HINSTANCE ShellExecuteA(HWND hwnd, const char *operation, const char *file, const char *params, const char *dir, int show_cmd);
-HINSTANCE ShellExecuteW(HWND hwnd, const wchar_t *operation, const wchar_t *file, const wchar_t *params, const wchar_t *dir, int show_cmd);
+HINSTANCE ShellExecuteA(HWND hwnd, const char *operation, const char *file, const char *params,
+                        const char *dir, int show_cmd);
+HINSTANCE ShellExecuteW(HWND hwnd, const wchar_t *operation, const wchar_t *file,
+                        const wchar_t *params, const wchar_t *dir, int show_cmd);
 
 typedef HINSTANCE HMODULE;
 
 HMODULE LoadLibraryExA(const char *filename, void *reserved, DWORD flags);
 
-DWORD FormatMessageA(DWORD flags, const void *source, DWORD msg, DWORD lang, char *buf, DWORD buf_size, va_list *args);
+DWORD FormatMessageA(DWORD flags, const void *source, DWORD msg, DWORD lang, char *buf,
+                     DWORD buf_size, va_list *args);
 
 void OutputDebugStringA(const char *message);
 
-#ifndef  _PICKLE_COMPILING
-LONG RegQueryValueExA(HKEY hkey, const char *value_name, DWORD *reserved, DWORD *type, BYTE *data, DWORD *num_data);
+#ifndef _PICKLE_COMPILING
+LONG RegQueryValueExA(HKEY hkey, const char *value_name, DWORD *reserved, DWORD *type, BYTE *data,
+                      DWORD *num_data);
 #else
-long RegQueryValueExA(HKEY hkey, const char *value_name, DWORD *reserved, DWORD *type, BYTE *data, DWORD *num_data);
+long RegQueryValueExA(HKEY hkey, const char *value_name, DWORD *reserved, DWORD *type, BYTE *data,
+                      DWORD *num_data);
 #endif
 
-#define RegCreateKey(hKey, lpSubKey, phkResult) RegCreateKeyEx(hKey, lpSubKey, 0, NULL, 0, 0, NULL, phkResult, NULL)
-#define RegQueryValueA(hKey, lpSubKey, lpValue, lpcbValue) RegQueryValueExA(hKey,lpSubKey, NULL, NULL, lpValue, lpcbValue)
-#define RegQueryValueW(hKey, lpSubKey, lpValue, lpcbValue) RegQueryValueExW(hKey,lpSubKey, NULL, NULL, lpValue, lpcbValue)
+#define RegCreateKey(hKey, lpSubKey, phkResult) \
+    RegCreateKeyEx(hKey, lpSubKey, 0, NULL, 0, 0, NULL, phkResult, NULL)
+#define RegQueryValueA(hKey, lpSubKey, lpValue, lpcbValue) \
+    RegQueryValueExA(hKey, lpSubKey, NULL, NULL, lpValue, lpcbValue)
+#define RegQueryValueW(hKey, lpSubKey, lpValue, lpcbValue) \
+    RegQueryValueExW(hKey, lpSubKey, NULL, NULL, lpValue, lpcbValue)
 #define RegQueryValue RegQueryValueW
-#define RegSetValue(hKey, lpSubKey, dwType, lpData, cbData) RegSetValueEx(hKey, lpSubKey, 0, dwType, lpData, cbData)
+#define RegSetValue(hKey, lpSubKey, dwType, lpData, cbData) \
+    RegSetValueEx(hKey, lpSubKey, 0, dwType, lpData, cbData)
 
 #define RegCreateKeyW RegCreateKey
 #define RegSetValueW RegSetValue
@@ -647,17 +657,24 @@ HANDLE FindFirstFileA(const char *filename, WIN32_FIND_DATAA *data);
 
 int FindNextFileA(HANDLE handle, WIN32_FIND_DATAA *data);
 
-HANDLE wince_CreateFileW(const wchar_t *filename, DWORD dwDesiredAccess, DWORD dwShareMode, struct _SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+HANDLE wince_CreateFileW(const wchar_t *filename, DWORD dwDesiredAccess, DWORD dwShareMode,
+                         struct _SECURITY_ATTRIBUTES *lpSecurityAttributes,
+                         DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
+                         HANDLE hTemplateFile);
 #define CreateFileW wince_CreateFileW
-HANDLE CreateFileA(const char *filename, DWORD dwDesiredAccess, DWORD dwShareMode, struct _SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+HANDLE CreateFileA(const char *filename, DWORD dwDesiredAccess, DWORD dwShareMode,
+                   struct _SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwCreationDisposition,
+                   DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
 DWORD wince_GetFileAttributesW(const wchar_t *filename);
 #define GetFileAttributesW wince_GetFileAttributesW
 DWORD GetFileAttributesA(const char *filename);
 
-BOOL wince_GetFileAttributesExW(const wchar_t *filename, enum _GET_FILEEX_INFO_LEVELS fInfoLevelId, void *lpFileInformation);
+BOOL wince_GetFileAttributesExW(const wchar_t *filename, enum _GET_FILEEX_INFO_LEVELS fInfoLevelId,
+                                void *lpFileInformation);
 #define GetFileAttributesExW wince_GetFileAttributesExW
-BOOL GetFileAttributesExA(const char *filename, enum _GET_FILEEX_INFO_LEVELS fInfoLevelId, void *lpFileInformation);
+BOOL GetFileAttributesExA(const char *filename, enum _GET_FILEEX_INFO_LEVELS fInfoLevelId,
+                          void *lpFileInformation);
 
 BOOL wince_SetFileAttributesW(const wchar_t *filename, DWORD attr);
 #define SetFileAttributesW wince_SetFileAttributesW
@@ -686,7 +703,6 @@ BOOL CreateSymbolicLinkW(wchar_t *lpSymlinkFileName, wchar_t *lpTargetFileName, 
 #define CreateSymbolicLink CreateSymbolicLinkW
 
 char *CharPrevA(const char *start, const char *current);
-
 
 typedef struct _object PyObject;
 

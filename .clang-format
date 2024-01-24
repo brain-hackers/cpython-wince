@@ -1,0 +1,23 @@
+# Portion from https://gist.github.com/pganssle/0e3a5f828b4d07d79447f6ced8e7e4db
+# Licensed under MIT License which the author permits to release with.
+# Copyright 2024 Takumi Sueda
+# Copyright 2019 Paul Ganssle
+
+# A clang-format style that approximates Python's PEP 7
+# Useful for IDE integration
+BasedOnStyle: Google
+AlwaysBreakAfterReturnType: AllDefinitions
+AllowShortIfStatementsOnASingleLine: false
+AlignAfterOpenBracket: Align
+BreakBeforeBraces: Stroustrup
+ColumnLimit: 100
+DerivePointerAlignment: false
+IndentWidth: 4
+Language: Cpp
+PointerAlignment: Right
+ReflowComments: true
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+TabWidth: 4
+UseTab: Never
+SortIncludes: false

@@ -1087,7 +1087,7 @@ resolve_symlinks(wchar_t **path_p)
     }
     return _PyStatus_OK();
 #else
-    return _PyStatus_ERR("you cant maybe in wince.");
+    return _PyStatus_ERR("Readlink is not available.");
 }
 #endif /* NOT HAVE_READLINK */
 

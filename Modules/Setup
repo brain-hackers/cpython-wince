@@ -279,11 +279,11 @@ _blake2 _blake2/blake2module.c _blake2/blake2b_impl.c _blake2/blake2s_impl.c
 # every system.
 
 # *** Always uncomment this (leave the leading underscore in!):
-#_tkinter _tkinter.c tkappinit.c ../PC/WinCE/_tkinter/dynload_tcltk.c -DWITH_APPINIT \
+# _tkinter _tkinter.c tkappinit.c -DWITH_APPINIT \
 # *** Uncomment and edit to reflect where your Tcl/Tk libraries are:
-#	-L. \
+#	-L/usr/local/lib \
 # *** Uncomment and edit to reflect where your Tcl/Tk headers are:
-#	-IPC/WinCE/_tkinter \
+#	-I/usr/local/include \
 # *** Uncomment and edit to reflect where your X11 header files are:
 #	-I/usr/X11R6/include \
 # *** Or uncomment this for Solaris:
@@ -298,7 +298,7 @@ _blake2 _blake2/blake2module.c _blake2/blake2b_impl.c _blake2/blake2s_impl.c
 # *** Uncomment and edit for TOGL extension only:
 #	-DWITH_TOGL togl.c \
 # *** Uncomment and edit to reflect your Tcl/Tk versions:
-#	-ltk84 -ltcl84 \
+#	-ltk8.2 -ltcl8.2 \
 # *** Uncomment and edit to reflect where your X11 libraries are:
 #	-L/usr/X11R6/lib \
 # *** Or uncomment this for Solaris:
