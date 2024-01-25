@@ -94,6 +94,9 @@ typedef long HRESULT;
 
 #define EWOULDBLOCK EAGAIN /* Operation would block */
 
+#define ECONNRESET 104 /* Connection reset by peer */
+#define EISCONN 106    /* Transport endpoint is already connected */
+
 /*
  * Because we need a per-thread errno, we define a function
  * pointer that we can call to return a pointer to the errno

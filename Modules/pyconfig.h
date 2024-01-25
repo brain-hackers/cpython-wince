@@ -757,13 +757,19 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 #define HAVE_ERFC 1
 
 /* Define if you have the 'inet_pton' function. */
-#define HAVE_INET_PTON 1
+#ifndef MS_WINCE
+#  define HAVE_INET_PTON 1
+#endif
 
 /* framework name */
 #define _PYTHONFRAMEWORK ""
 
 /* Define if libssl has X509_VERIFY_PARAM_set1_host and related function */
 #define HAVE_X509_VERIFY_PARAM_SET1_HOST 1
+
+#ifdef MS_WINCE
+# define HAVE_ADDRINFO 1
+#endif
 
 #define PLATLIBDIR "lib"
 

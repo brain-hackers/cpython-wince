@@ -18,9 +18,11 @@
 /*
  * If Windows has bluetooth support, include bluetooth constants.
  */
-#if defined(AF_BTH) && !defined(MS_WINCE)
-# include <ws2bth.h>
-# include <pshpack1.h>
+#ifdef AF_BTH
+# ifndef MS_WINCE
+#  include <ws2bth.h>
+#  include <pshpack1.h>
+# endif
 
 /*
  * The current implementation assumes the bdaddr in the sockaddr structs
@@ -52,7 +54,9 @@ struct SOCKADDR_BTH_REDEF {
     };
 
 };
-# include <poppack.h>
+# ifndef MS_WINCE
+#  include <poppack.h>
+# endif
 #endif
 
 /* Windows 'supports' CMSG_LEN, but does not follow the POSIX standard
