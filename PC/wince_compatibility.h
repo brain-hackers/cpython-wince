@@ -599,14 +599,32 @@ WINCE_PyAPI_FUNC(int) wince_isctype(int ch, int classification);
 #define SIGINT 0
 
 /* Environment variables are not supported */
-WINCE_PyAPI_FUNC(DWORD) wince_GetEnvironmentVariable();
-#define GetEnvironmentVariable(name, buf, size) wince_GetEnvironmentVariable()
+WINCE_PyAPI_FUNC(DWORD) wince_GetEnvironmentVariable(wchar_t *, wchar_t *, DWORD);
+WINCE_PyAPI_FUNC(BOOL) wince_SetEnvironmentVariable(wchar_t *, wchar_t *);
+#define GetEnvironmentVariable wince_GetEnvironmentVariable
+#define SetEnvironmentVariable wince_SetEnvironmentVariable
 #define GetEnvironmentVariableW GetEnvironmentVariable
-/* When setting environment variables, do nothing and succeed */
-#define SetEnvironmentVariableA(n, v) (TRUE)
-#define SetEnvironmentVariableW(n, v) (TRUE)
+#define SetEnvironmentVariableW SetEnvironmentVariable
 
 #define ExpandEnvironmentStringsW(s, d, n) (0)
+
+#define _MAX_ENV 0x7fff
+
+wchar_t **wince_wenviron;
+char **wince_environ;
+
+char *wince_getenv(const char *);
+wchar_t *wince_wgetenv(const wchar_t *);
+int wince_putenv(const char *);
+int wince_wputenv(const wchar_t *);
+
+#define _wenviron wince_wenviron
+#define _environ wince_environ
+#define environ _environ
+#define getenv wince_getenv
+#define _wgetenv wince_wgetenv
+#define _putenv wince_putenv
+#define _wputenv wince_wputenv
 
 int _getpid(void);
 #define getpid _getpid

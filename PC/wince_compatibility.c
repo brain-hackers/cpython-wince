@@ -2827,13 +2827,6 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
     return result;
 }
 
-DWORD
-wince_GetEnvironmentVariable()
-{
-    SetLastError(ERROR_ENVVAR_NOT_FOUND);
-    return 0;
-}
-
 /*
  * This function is needed because the default Windows CE implementation
  * does not handle EOF (-1) properly

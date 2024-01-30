@@ -48,6 +48,11 @@ int showConsole = 1;
 int showConsole = 0;
 #endif
 
+static char **_env = NULL;
+static wchar_t **_wenv = NULL;
+static int env_ready = 0;
+static size_t envsize = 0;
+
 int
 WinCEShell_fileno(FILE *stream)
 {
@@ -588,6 +593,7 @@ WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
             if (bgBrush)
                 DeleteObject(bgBrush);
             Exited = 1;
+            PostQuitMessage(0);
             break;
         default:
             return DefWindowProc(hWnd, msg, wp, lp);
@@ -653,13 +659,10 @@ WinCEShell(HINSTANCE hCurInst)
 
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        if (Exited) {
-            SetEvent(ghReadlineEv);
-            WaitForSingleObject(ghFinalizeEv, INFINITE);
-            SetEvent(ghFinalizeDoneEv);
-            PostQuitMessage(0);
-        }
     }
+    SetEvent(ghReadlineEv);
+    WaitForSingleObject(ghFinalizeEv, INFINITE);
+    SetEvent(ghFinalizeDoneEv);
 
     return 0;
 }
@@ -873,6 +876,276 @@ WinCEShell_Cleanup()
     WaitForSingleObject(ghFinalizeDoneEv, 10);
 }
 
+char *
+wince_getenv(const char *varname)
+{
+    if (env_ready <= 0 || _env == NULL)
+        return NULL;
+
+    int i = 0;
+    while (_env[i] != NULL) {
+        if (!_strnicmp(_env[i], varname, strlen(varname))) {
+            if (!strncmp(_env[i] + strlen(varname), "=", 1)) {
+                break;
+            }
+        }
+        i++;
+    }
+    return _env[i];
+}
+
+wchar_t *
+wince_wgetenv(const wchar_t *varname)
+{
+    if (env_ready <= 0 || _wenv == NULL)
+        return NULL;
+
+    int i = 0;
+    while (_wenv[i] != NULL) {
+        if (!_wcsnicmp(_wenv[i], varname, wcslen(varname))) {
+            if (!wcsncmp(_wenv[i] + wcslen(varname), L"=", 1)) {
+                break;
+            }
+        }
+        i++;
+    }
+    return _wenv[i];
+}
+
+int
+wince_putenv(const char *envstr)
+{
+    if (env_ready <= 0 || _env == NULL)
+        return -1;
+
+    char *c;
+    char *e;
+
+    c = strchr(envstr, '=');
+    if (c == NULL)
+        return -1;
+
+    int i = 0;
+    while (_env[i] != NULL) {
+        if (!_strnicmp(_env[i], envstr, c - envstr + 1)) {
+            break;
+        }
+        i++;
+    }
+    if (*(c + 1) != '\0') {
+        char *tmp;
+        wchar_t *tmpw;
+        char *ch;
+        tmp = (char *)calloc(strlen(envstr) + 1, sizeof(char));
+        tmpw = (wchar_t *)calloc(strlen(envstr) + 1, sizeof(wchar_t));
+        if (tmp == NULL || tmpw == NULL) {
+            free(tmp);
+            free(tmpw);
+            return -1;
+        }
+        strcpy(tmp, envstr);
+        ch = tmp;
+        while (*ch != '\0') {
+            *ch = toupper(*ch);
+            ch++;
+        }
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, tmp, -1, tmpw, strlen(envstr) + 1);
+        if (_env[i] == NULL) {
+            if (envsize == i) {
+                char **tmpenv;
+                wchar_t **tmpwenv;
+                tmpenv = (char **)realloc(_env, (envsize + 16) * sizeof(char *));
+                tmpwenv = (wchar_t **)realloc(_wenv, (envsize + 16) * sizeof(wchar_t *));
+                if (tmpenv == NULL || tmpwenv == NULL) {
+                    free(_env);
+                    free(_wenv);
+                    free(tmpenv);
+                    free(tmpwenv);
+                    env_ready = -1;
+                    return -1;
+                }
+                _env = tmpenv;
+                _wenv = tmpwenv;
+                envsize += 16;
+            }
+        }
+        else {
+            free(_env[i]);
+            free(_wenv[i]);
+        }
+        _env[i] = tmp;
+        _wenv[i] = tmpw;
+    }
+    else if (_env[i] != NULL) {
+        free(_env[i]);
+        free(_wenv[i]);
+        while (_env[i] != NULL) {
+            i++;
+            _env[i - 1] = _env[i];
+            _wenv[i - 1] = _wenv[i];
+        }
+        if (i + 16 < envsize) {
+            envsize -= 16;
+        }
+    }
+    return 0;
+}
+
+int
+wince_wputenv(const wchar_t *envstr)
+{
+    char *tmp;
+    int res;
+    int tmpbufsize;
+    tmpbufsize = WideCharToMultiByte(CP_ACP, 0, envstr, -1, NULL, 0, NULL, NULL);
+    tmp = (char *)calloc(tmpbufsize, sizeof(char));
+    WideCharToMultiByte(CP_ACP, 0, envstr, -1, tmp, tmpbufsize, NULL, NULL);
+    res = wince_putenv(tmp);
+    free(tmp);
+    return res;
+}
+
+DWORD
+wince_GetEnvironmentVariable(wchar_t *name, wchar_t *buf, DWORD size)
+{
+    wchar_t *value, *c;
+    value = _wgetenv(name);
+    c = wcschr(value, L'=');
+    if (c == NULL) {
+        SetLastError(ERROR_ENVVAR_NOT_FOUND);
+        return 0;
+    }
+    if (size <= wcslen(c + 1)) {
+        return wcslen(c + 1) + 1;
+    }
+    wcscpy(buf, c + 1);
+    return wcslen(c + 1);
+}
+
+BOOL
+wince_SetEnvironmentVariable(wchar_t *name, wchar_t *value)
+{
+    wchar_t *envstr;
+    int result;
+    envstr = (wchar_t *)calloc(wcslen(name) + wcslen(value) + 2, sizeof(wchar_t));
+    if (envstr == NULL)
+        return FALSE;
+
+    swprintf(envstr, L"%ls=%ls", name, value);
+
+    result = _wputenv(envstr);
+    free(envstr);
+    if (result == 0)
+        return TRUE;
+    return FALSE;
+}
+
+#define ENV_DEFAULT_SIZE 64
+
+int
+WinCEShell_PrepareEnv()
+{
+    if (env_ready != 0)
+        return 0;
+
+    _env = (char **)calloc(ENV_DEFAULT_SIZE, sizeof(char *));
+    _wenv = (wchar_t **)calloc(ENV_DEFAULT_SIZE, sizeof(wchar_t *));
+    if (_env == NULL || _wenv == NULL) {
+        free(_env);
+        free(_wenv);
+        _env = NULL;
+        _wenv = NULL;
+        env_ready = -1;
+        return -1;
+    }
+    envsize = ENV_DEFAULT_SIZE;
+    env_ready = 1;
+    return 0;
+}
+
+#undef ENV_DEFAULT_SIZE
+
+int
+WinCEShell_LoadEnvFromFile(wchar_t *filename)
+{
+    char *c, *d;
+    static wchar_t *wtext;
+    char *text;
+    int textlen;
+    int isdefault = 0;
+
+    char newline[1];
+    *newline = '\r';
+
+    HANDLE hFile;
+
+    if (env_ready == 0) {
+        WinCEShell_PrepareEnv();
+        isdefault = 1;
+    }
+
+    char *default_text;
+    default_text = "PYTHONCASEOK=1";
+
+    hFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    if (GetLastError() != ERROR_ALREADY_EXISTS) {
+        text = (char *)calloc(strlen(default_text) + 1, sizeof(char));
+        if (isdefault) {
+            strcpy(text, default_text);
+        }
+        textlen = (DWORD)strlen(text);
+
+        int written = 0;
+        if (!WriteFile(hFile, text, textlen, &written, NULL)) {
+            CloseHandle(hFile);
+            return -1;
+        }
+    }
+    else {
+        DWORD filesize;
+        filesize = GetFileSize(hFile, NULL);
+        if (filesize == 0xffffffff) {
+            CloseHandle(hFile);
+            return -1;
+        }
+        text = (char *)calloc(filesize + 1, sizeof(char));
+        if (text == NULL || !ReadFile(hFile, text, filesize, &textlen, NULL)) {
+            free(text);
+            CloseHandle(hFile);
+            return -1;
+        }
+    }
+    CloseHandle(hFile);
+
+    c = text;
+
+    if (strchr(text, *newline) == NULL) {
+        *newline = '\n';
+    }
+    while (c != NULL && *c != L'\0') {
+        d = c;
+        c = strchr(c, *newline);
+        if (c != NULL) {
+            *c = '\0';
+        }
+        if (_putenv(d) < 0) {
+            goto error;
+        }
+        if (c == NULL)
+            break;
+        if (*(c + 1) == '\n') {
+            c++;
+        }
+        c++;
+    }
+    free(text);
+    return 0;
+error:
+    free(text);
+    return -1;
+}
+
 int
 WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, int nCmdShow)
 {
@@ -880,10 +1153,26 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     int exitcode;
     char *result;
     char *prefix = "";
+    wchar_t env_ini[PATH_MAX + 1];
 
     WINCE_SHELL_ARGS shellArgs = {0};
 
     PyOS_ReadlineFunctionPointer = &WinCEShell_readline;  // defined at Parser/myreadline.c
+
+    if (!GetModuleFileName(NULL, env_ini, MAX_PATH + 1)) {
+        return -1;
+    }
+    char *c;
+    c = wcsrchr(env_ini, L'\\');
+    if (c == NULL) {
+        c = env_ini[0];
+    }
+    *c = L'\0';
+    if (PathCchCombineEx(env_ini, MAX_PATH + 1, env_ini, L"env.ini", 0) == S_OK)
+        WinCEShell_LoadEnvFromFile(env_ini);
+
+    wince_environ = _env;
+    wince_wenviron = _wenv;
 
     ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, L"initializedEv");
     ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeEv");

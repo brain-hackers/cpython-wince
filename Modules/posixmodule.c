@@ -1607,7 +1607,7 @@ win32_get_reparse_tag(HANDLE reparse_point_handle, ULONG *reparse_tag)
 ** man environ(7).
 */
 #include <crt_externs.h>
-#elif !defined(_MSC_VER) && !defined(MS_WINCE) && (!defined(__WATCOMC__) || defined(__QNX__) || defined(__VXWORKS__))
+#elif !defined(_MSC_VER) && (!defined(__WATCOMC__) || defined(__QNX__) || defined(__VXWORKS__))
 extern char **environ;
 #endif /* !_MSC_VER */
 
@@ -1624,7 +1624,7 @@ convertenviron(void)
     d = PyDict_New();
     if (d == NULL)
         return NULL;
-#if defined(MS_WINDOWS) && !defined(MS_WINCE)
+#ifdef MS_WINDOWS
     /* _wenviron must be initialized in this way if the program is started
        through main() instead of wmain(). */
     _wgetenv(L"");
@@ -10992,7 +10992,6 @@ win32_putenv(PyObject *name, PyObject *value)
     if (env == NULL) {
         return NULL;
     }
-#ifndef MS_WINCE
     if (size > _MAX_ENV) {
         PyErr_Format(PyExc_ValueError,
                      "the environment variable is longer than %u characters",
@@ -11014,7 +11013,6 @@ win32_putenv(PyObject *name, PyObject *value)
         posix_error();
         return NULL;
     }
-#endif /* !MS_WINCE */
 
     Py_RETURN_NONE;
 }

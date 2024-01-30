@@ -48,9 +48,15 @@ Py_FrozenMain(int argc, char **argv)
         unbuffered = 1;
 
     if (unbuffered) {
+#ifndef MS_WINCE
         setbuf(stdin, (char *)NULL);
         setbuf(stdout, (char *)NULL);
         setbuf(stderr, (char *)NULL);
+#else // setbuf is undefined
+        setvbuf(stdin, (char *)NULL, _IONBF, BUFSIZ);
+        setvbuf(stdout, (char *)NULL, _IONBF, BUFSIZ);
+        setvbuf(stderr, (char *)NULL, _IONBF, BUFSIZ);
+#endif
     }
 
     oldloc = _PyMem_RawStrdup(setlocale(LC_ALL, NULL));

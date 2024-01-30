@@ -102,10 +102,6 @@ WIN32 is still required for the locale module.
 // if include wince_compatibility.h after defined GetVersion, it conflicts.
 #include "wince_compatibility.h"
 #define GetVersion() (4)
-/* Windows CE does not support environment variables */
-#define getenv(v) (NULL)
-#define _wgetenv getenv
-#define environ (NULL)
 /* Redefine fileno to return an integer */
 #include <stdio.h>
 #undef fileno
