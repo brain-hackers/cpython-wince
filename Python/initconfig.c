@@ -102,7 +102,13 @@ static const char usage_3[] = "\
 \n\
 --check-hash-based-pycs always|default|never:\n\
     control how Python invalidates hash-based .pyc files\n\
-";
+"
+#ifdef MS_WINCE
+"--env-path path:\n\
+    add path to file in which environment variables are defined (Windows CE)\n\
+"
+#endif
+"";
 static const char usage_4[] = "\
 file   : program read from script file\n\
 -      : program read from stdin (default; interactive mode if a tty)\n\
@@ -2363,7 +2369,11 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
                 return _PyStatus_EXIT(2);
             }
             break;
-
+#ifdef MS_WINCE
+        case 1:
+            /* option handled by _PyPreCmdline_Read() */
+            break;
+#endif
         case 'b':
             config->bytes_warning++;
             break;

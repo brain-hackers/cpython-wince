@@ -194,6 +194,12 @@ precmdline_parse_cmdline(_PyPreCmdline *cmdline)
         }
 
         switch (c) {
+#ifdef MS_WINCE
+        case 1:
+            if (WinCEShell_LoadEnvFromFile(_PyOS_optarg) < 0)
+                return _PyStatus_ERR("failed to load environment variables from file given");
+            break;
+#endif
         case 'E':
             cmdline->use_environment = 0;
             break;
