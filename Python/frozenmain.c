@@ -3,6 +3,7 @@
 
 #include "Python.h"
 #include "pycore_runtime.h"  // _PyRuntime_Initialize()
+#include <locale.h>
 
 #if defined(MS_WINDOWS) && defined(_MSC_VER)
 extern void PyWinFreeze_ExeInit(void);

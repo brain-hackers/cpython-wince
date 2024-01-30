@@ -2289,7 +2289,7 @@ _Py_GetLocaleconvNumeric(struct lconv *lc,
     assert(decimal_point != NULL);
     assert(thousands_sep != NULL);
 
-#if defined(MS_WINDOWS) && !defined(MS_WINCE)
+#ifndef MS_WINDOWS
     int change_locale = 0;
     if ((strlen(lc->decimal_point) > 1 || ((unsigned char)lc->decimal_point[0]) > 127)) {
         change_locale = 1;

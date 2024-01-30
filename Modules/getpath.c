@@ -1044,10 +1044,10 @@ calculate_program(PyCalculatePath *calculate, _PyPathConfig *pathconfig)
 }
 
 
+#if HAVE_READLINK
 static PyStatus
 resolve_symlinks(wchar_t **path_p)
 {
-#if HAVE_READLINK
     wchar_t new_path[MAXPATHLEN + 1];
     const size_t new_path_len = Py_ARRAY_LENGTH(new_path);
     unsigned int nlink = 0;
@@ -1086,10 +1086,8 @@ resolve_symlinks(wchar_t **path_p)
         }
     }
     return _PyStatus_OK();
-#else
-    return _PyStatus_ERR("Readlink is not available.");
 }
-#endif /* NOT HAVE_READLINK */
+#endif /* HAVE_READLINK */
 
 
 #ifdef WITH_NEXT_FRAMEWORK

@@ -19405,9 +19405,17 @@ then
 fi
 
 echo "creating Makefile" >&6
-$SHELL $srcdir/Modules/makesetup -c $srcdir/Modules/config.c.in \
-			-s Modules \
-			Modules/Setup.local $srcdir/Modules/Setup
+if test "$MACHDEP" = wince; then
+	$SHELL $srcdir/Modules/makesetup -c $srcdir/Modules/config.c.in \
+				-s Modules \
+				Modules/Setup.wince \
+				Modules/Setup.local $srcdir/Modules/Setup
+else
+	$SHELL $srcdir/Modules/makesetup -c $srcdir/Modules/config.c.in \
+				-s Modules \
+				Modules/Setup.posix \
+				Modules/Setup.local $srcdir/Modules/Setup
+fi
 mv config.c Modules
 
 if test "$Py_OPT" = 'false' -a "$Py_DEBUG" != 'true'; then

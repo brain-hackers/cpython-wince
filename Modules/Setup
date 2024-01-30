@@ -101,7 +101,6 @@ PYTHONPATH=$(COREPYTHONPATH)
 # This only contains the minimal set of modules required to run the
 # setup.py script in the root of the Python source tree.
 
-ce -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal posixmodule.c # posix (UNIX) system calls
 errno errnomodule.c			# posix (UNIX) errno values
 pwd pwdmodule.c				# this is needed to find out the user's home dir
 					# if $HOME is not set
@@ -167,11 +166,10 @@ _symtable symtablemodule.c
 # Modules that should always be present (non UNIX dependent):
 
 array -DPy_BUILD_CORE_MODULE arraymodule.c	# array objects
-cmath cmathmodule.c _math.c -DPy_BUILD_CORE_MODULE # -lm # complex math library functions
 math mathmodule.c _math.c -DPy_BUILD_CORE_MODULE # -lm # math library functions, e.g. sin()
 _contextvars _contextvarsmodule.c  # Context Variables
 _struct -DPy_BUILD_CORE_MODULE _struct.c	# binary structure packing/unpacking
-_weakref _weakref.c	# basic weak reference support
+#_weakref _weakref.c	# basic weak reference support
 #_testcapi _testcapimodule.c    # Python C API test module
 #_testinternalcapi _testinternalcapi.c -I$(srcdir)/Include/internal -DPy_BUILD_CORE_MODULE  # Python internal C API test module
 _random _randommodule.c -DPy_BUILD_CORE_MODULE	# Random number generator

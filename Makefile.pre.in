@@ -292,8 +292,7 @@ COVERAGE_REPORT_OPTIONS=--no-branch-coverage --title "CPython lcov report"
 # Modules
 MODULE_OBJS=	\
 		Modules/gcmodule.o \
-		Modules/main.o \
-		Modules/_winapi.o
+		Modules/main.o
 
 IO_H=	Modules/_io/_iomodule.h
 
@@ -451,6 +450,7 @@ OBJECT_OBJS=	\
 # WINCE
 WINCE_OBJS=	\
 		WinCE/terminal.o \
+		Modules/_winapi.o \
 		Modules/_xxsubinterpretersmodule.o \
 		Modules/rotatingtree.o \
 		Modules/_lsprof.o \
@@ -480,7 +480,8 @@ ZLIB_OBJS= \
 
 ##########################################################################
 # objects that get linked into the Python library
-LIBRARY_OBJS_OMIT_FROZEN=	\
+ifeq ($(MACHDEP),wince)
+	LIBRARY_OBJS_OMIT_FROZEN=	\
 		Modules/getbuildinfo.o \
 		$(WINCE_OBJS) \
 		$(ZLIB_OBJS) \
@@ -489,10 +490,23 @@ LIBRARY_OBJS_OMIT_FROZEN=	\
 		$(PYTHON_OBJS) \
 		$(MODULE_OBJS) \
 		$(MODOBJS)
+else
+	LIBRARY_OBJS_OMIT_FROZEN=	\
+		Modules/getbuildinfo.o \
+		Modules/getpath.o \
+		Modules/config.o \
+		$(PARSER_OBJS) \
+		$(OBJECT_OBJS) \
+		$(PYTHON_OBJS) \
+		$(MODULE_OBJS) \
+		$(MODOBJS)
+endif
+
 
 LIBRARY_OBJS=	\
 		$(LIBRARY_OBJS_OMIT_FROZEN) \
 		Python/frozen.o
+
 
 ##########################################################################
 # DTrace
@@ -826,6 +840,14 @@ Modules/getbuildinfo.o: \
 	      -DGITTAG="\"`LC_ALL=C $(GITTAG)`\"" \
 	      -DGITBRANCH="\"`LC_ALL=C $(GITBRANCH)`\"" \
 	      -o $@ $(srcdir)/Modules/getbuildinfo.c
+
+Modules/getpath.o: $(srcdir)/Modules/getpath.c Makefile
+	$(CC) -c $(PY_CORE_CFLAGS) -DPYTHONPATH='"$(PYTHONPATH)"' \
+		-DPREFIX='"$(prefix)"' \
+		-DEXEC_PREFIX='"$(exec_prefix)"' \
+		-DVERSION='"$(VERSION)"' \
+		-DVPATH='"$(VPATH)"' \
+		-o $@ $(srcdir)/Modules/getpath.c
 
 PC/getpathp.o: $(srcdir)/PC/getpathp.c Makefile
 	$(CC) -c $(PY_CORE_CFLAGS) -DPYTHONPATH='"$(PYTHONPATH)"' \
