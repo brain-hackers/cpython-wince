@@ -877,7 +877,7 @@ WinCEShell_Cleanup()
         free(_env);
     }
     if (_wenv != NULL) {
-        for (int i = 0; _env[i] != NULL; i++) free(_wenv[i]);
+        for (int i = 0; _wenv[i] != NULL; i++) free(_wenv[i]);
         free(_wenv);
     }
     SetEvent(ghFinalizeEv);
@@ -1199,7 +1199,7 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     wargv = CommandLineToArgvW(GetCommandLine(), &argc);
     if (Py_AtExit(&WinCEShell_Cleanup) < 0)
         MessageBox(NULL, L"Py_AtExit returned -1 so cleanup will not work correctly.", L"WARNING",
-                   w MB_OK);
+                   MB_OK);
 
     if (wargv == NULL) {
         MessageBox(NULL, L"Failed to parse the command line", L"ERROR", MB_OK);
