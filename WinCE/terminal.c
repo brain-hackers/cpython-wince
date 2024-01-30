@@ -872,6 +872,14 @@ WinCEShell_Cleanup()
         for (int i = 0; i < argc; i++) free(wargv[i]);
         free(wargv);
     }
+    if (_env != NULL) {
+        for (int i = 0; _env[i] != NULL; i++) free(_env[i]);
+        free(_env);
+    }
+    if (_wenv != NULL) {
+        for (int i = 0; _env[i] != NULL; i++) free(_wenv[i]);
+        free(_wenv);
+    }
     SetEvent(ghFinalizeEv);
     WaitForSingleObject(ghFinalizeDoneEv, 10);
 }
@@ -957,10 +965,14 @@ wince_putenv(const char *envstr)
                 tmpenv = (char **)realloc(_env, (envsize + 16) * sizeof(char *));
                 tmpwenv = (wchar_t **)realloc(_wenv, (envsize + 16) * sizeof(wchar_t *));
                 if (tmpenv == NULL || tmpwenv == NULL) {
+                    if (tmpenv != NULL)
+                        _env = tmpenv;
+                    if (tmpwenv != NULL)
+                        _wenv = tmpwenv;
+                    for (int i = 0; _env[i] != NULL; i++) free(_env[i]);
+                    for (int i = 0; _wenv[i] != NULL; i++) free(_wenv[i]);
                     free(_env);
                     free(_wenv);
-                    free(tmpenv);
-                    free(tmpwenv);
                     env_ready = -1;
                     return -1;
                 }
@@ -1187,7 +1199,7 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     wargv = CommandLineToArgvW(GetCommandLine(), &argc);
     if (Py_AtExit(&WinCEShell_Cleanup) < 0)
         MessageBox(NULL, L"Py_AtExit returned -1 so cleanup will not work correctly.", L"WARNING",
-                   MB_OK);
+                   w MB_OK);
 
     if (wargv == NULL) {
         MessageBox(NULL, L"Failed to parse the command line", L"ERROR", MB_OK);
