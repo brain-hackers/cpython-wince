@@ -1099,12 +1099,14 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
     char *default_text;
     default_text = "PYTHONCASEOK=1";
 
-    hFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+    hFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, isdefault ? OPEN_ALWAYS : OPEN_EXISTING,
                        FILE_ATTRIBUTE_NORMAL, NULL);
     if (GetLastError() != ERROR_ALREADY_EXISTS) {
-        text = (char *)calloc(strlen(default_text) + 1, sizeof(char));
         if (isdefault) {
+            text = (char *)calloc(strlen(default_text) + 1, sizeof(char));
             strcpy(text, default_text);
+        } else { //ERROR_FILE_NOT_FOUND
+            return -1;
         }
         textlen = (DWORD)strlen(text);
 
