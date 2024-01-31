@@ -957,7 +957,7 @@ wince_putenv(const char *envstr)
         }
         strcpy(tmp, envstr);
         ch = tmp;
-        while (*ch != '\0') {
+        while (*ch != '=') {
             *ch = toupper(*ch);
             ch++;
         }
