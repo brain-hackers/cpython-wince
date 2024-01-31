@@ -899,7 +899,9 @@ wince_getenv(const char *varname)
         }
         i++;
     }
-    return _env[i];
+    if (_env[i] == NULL)
+		return NULL;
+    return _env[i] + strlen(varname) + 1;
 }
 
 wchar_t *
@@ -917,7 +919,9 @@ wince_wgetenv(const wchar_t *varname)
         }
         i++;
     }
-    return _wenv[i];
+	if (_wenv[i] == NULL)
+		return NULL;
+    return _wenv[i] + wcslen(varname) + 1;
 }
 
 int
@@ -1020,18 +1024,17 @@ wince_wputenv(const wchar_t *envstr)
 DWORD
 wince_GetEnvironmentVariable(wchar_t *name, wchar_t *buf, DWORD size)
 {
-    wchar_t *value, *c;
+    wchar_t *value;
     value = _wgetenv(name);
-    c = wcschr(value, L'=');
-    if (c == NULL) {
+    if (value == NULL) {
         SetLastError(ERROR_ENVVAR_NOT_FOUND);
         return 0;
     }
-    if (size <= wcslen(c + 1)) {
-        return wcslen(c + 1) + 1;
+    if (size <= wcslen(value)) {
+        return wcslen(value) + 1;
     }
-    wcscpy(buf, c + 1);
-    return wcslen(c + 1);
+    wcscpy(buf, value);
+    return wcslen(value);
 }
 
 BOOL
