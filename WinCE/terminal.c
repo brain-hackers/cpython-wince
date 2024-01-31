@@ -959,7 +959,7 @@ wince_putenv(const char *envstr)
         ch = tmp;
         while (*ch != '=') {
             *ch = toupper(*ch);
-            if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_", *ch) != NULL) {
+            if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_", *ch) == NULL) {
                 free(tmp);
                 free(tmpw);
                 return -1;
