@@ -1182,7 +1182,7 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
         c = env_ini[0];
     }
     *c = L'\0';
-    if (PathCchCombineEx(env_ini, MAX_PATH + 1, env_ini, L"env.ini", 0) == S_OK)
+    if (PathCchCombineEx(env_ini, MAX_PATH + 1, env_ini, L"environ.ini", 0) == S_OK)
         WinCEShell_LoadEnvFromFile(env_ini);
 
     wince_environ = _env;
