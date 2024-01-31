@@ -959,6 +959,11 @@ wince_putenv(const char *envstr)
         ch = tmp;
         while (*ch != '=') {
             *ch = toupper(*ch);
+            if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_", *ch) != NULL) {
+                free(tmp);
+                free(tmpw);
+                return -1;
+            }
             ch++;
         }
         MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, tmp, -1, tmpw, strlen(envstr) + 1);
