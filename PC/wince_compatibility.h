@@ -216,8 +216,8 @@ size_t wcsnlen(const wchar_t *str, size_t numberOfElements);
 int wcscat_s(wchar_t *strDestination, size_t numberOfElements, const wchar_t *strSource);
 
 #define _chsize_s _chsize
-#define wcscpy_s(dest, size, src) (wcscpy(dest, src))
-#define wcsncpy_s(d, n, s, c) (wcsncpy(d, s, c))
+#define wcscpy_s(dest, size, src) (wcslen(src) >= size?-1:(wcscpy(dest, src) == NULL?-1:0))
+#define wcsncpy_s(d, n, s, c) ((n < c?-1:(wcsncpy(d, s, c) == NULL?-1:0))) // FIXME-WINCE: STRUNCATE value?
 #define wcsnlen_s(str, num) str == NULL ? 0 : wcsnlen(str, num)
 #define wcsncasecmp _wcsnicmp
 #define wcstok_s wcstok
