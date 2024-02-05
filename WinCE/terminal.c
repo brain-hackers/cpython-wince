@@ -1047,11 +1047,20 @@ wince_SetEnvironmentVariable(wchar_t *name, wchar_t *value)
 {
     wchar_t *envstr;
     int result;
-    envstr = (wchar_t *)calloc(wcslen(name) + wcslen(value) + 2, sizeof(wchar_t));
+    if (name == NULL)
+		return FALSE;
+    if (value != NULL)
+		envstr = (wchar_t *)calloc(wcslen(name) + wcslen(value) + 2, sizeof(wchar_t));
+	else
+		envstr = (wchar_t *)calloc(wcslen(name) + 2, sizeof(wchar_t));
+
     if (envstr == NULL)
         return FALSE;
 
-    swprintf(envstr, L"%ls=%ls", name, value);
+	if (value != NULL)
+		swprintf(envstr, L"%ls=%ls", name, value);
+	else
+		swprintf(envstr, L"%ls=", name);
 
     result = _wputenv(envstr);
     free(envstr);
