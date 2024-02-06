@@ -948,11 +948,10 @@ wince_putenv(const char *envstr)
         char *tmp;
         wchar_t *tmpw;
         char *ch;
+        int tmplen;
         tmp = (char *)calloc(strlen(envstr) + 1, sizeof(char));
-        tmpw = (wchar_t *)calloc(strlen(envstr) + 1, sizeof(wchar_t));
-        if (tmp == NULL || tmpw == NULL) {
+        if (tmp == NULL) {
             free(tmp);
-            free(tmpw);
             return -1;
         }
         strcpy(tmp, envstr);
@@ -961,12 +960,19 @@ wince_putenv(const char *envstr)
             *ch = toupper(*ch);
             if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_", *ch) == NULL) {
                 free(tmp);
-                free(tmpw);
                 return -1;
             }
             ch++;
         }
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, tmp, -1, tmpw, strlen(envstr) + 1);
+        tmplen = MultiByteToWideChar(CP_UTF8, 0, tmp, -1, NULL, 0);
+        tmpw = (wchar_t *)calloc(tmplen, sizeof(wchar_t));
+        if (tmpw == NULL) {
+            free(tmp);
+            free(tmpw);
+            return -1;
+        }
+
+        MultiByteToWideChar(CP_UTF8, 0, tmp, -1, tmpw, tmplen);
         if (_env[i] == NULL) {
             if (envsize == i) {
                 char **tmpenv;
@@ -1018,9 +1024,9 @@ wince_wputenv(const wchar_t *envstr)
     char *tmp;
     int res;
     int tmpbufsize;
-    tmpbufsize = WideCharToMultiByte(CP_ACP, 0, envstr, -1, NULL, 0, NULL, NULL);
+    tmpbufsize = WideCharToMultiByte(CP_UTF8, 0, envstr, -1, NULL, 0, NULL, NULL);
     tmp = (char *)calloc(tmpbufsize, sizeof(char));
-    WideCharToMultiByte(CP_ACP, 0, envstr, -1, tmp, tmpbufsize, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, envstr, -1, tmp, tmpbufsize, NULL, NULL);
     res = wince_putenv(tmp);
     free(tmp);
     return res;
@@ -1154,6 +1160,13 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
     if (strstr(text, newline) == NULL) {
         strcpy(newline, "\n");
     }
+
+    // BOM
+    if (!strncmp(c, "\xEF\xBB\xBF", 3))
+    {
+        c += 3;
+    }
+
     while (c != NULL && *c != '\0') {
         d = c;
         c = strstr(c, newline);
