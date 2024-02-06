@@ -1103,8 +1103,7 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
     int textlen;
     int isdefault = 0;
 
-    char newline[1];
-    *newline = '\r';
+    char newline[3] = "\r\n";
 
     HANDLE hFile;
 
@@ -1152,12 +1151,12 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
 
     c = text;
 
-    if (strchr(text, *newline) == NULL) {
-        *newline = '\n';
+    if (strstr(text, newline) == NULL) {
+        strcpy(newline, "\n");
     }
-    while (c != NULL && *c != L'\0') {
+    while (c != NULL && *c != '\0') {
         d = c;
-        c = strchr(c, *newline);
+        c = strstr(c, newline);
         if (c != NULL) {
             *c = '\0';
         }
