@@ -1054,19 +1054,19 @@ wince_SetEnvironmentVariable(wchar_t *name, wchar_t *value)
     wchar_t *envstr;
     int result;
     if (name == NULL)
-		return FALSE;
+        return FALSE;
     if (value != NULL)
-		envstr = (wchar_t *)calloc(wcslen(name) + wcslen(value) + 2, sizeof(wchar_t));
-	else
-		envstr = (wchar_t *)calloc(wcslen(name) + 2, sizeof(wchar_t));
+        envstr = (wchar_t *)calloc(wcslen(name) + wcslen(value) + 2, sizeof(wchar_t));
+    else
+        envstr = (wchar_t *)calloc(wcslen(name) + 2, sizeof(wchar_t));
 
     if (envstr == NULL)
         return FALSE;
 
-	if (value != NULL)
-		swprintf(envstr, L"%ls=%ls", name, value);
-	else
-		swprintf(envstr, L"%ls=", name);
+    if (value != NULL)
+        swprintf(envstr, L"%ls=%ls", name, value);
+    else
+        swprintf(envstr, L"%ls=", name);
 
     result = _wputenv(envstr);
     free(envstr);
@@ -1162,8 +1162,7 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
     }
 
     // BOM
-    if (!strncmp(c, "\xEF\xBB\xBF", 3))
-    {
+    if (!strncmp(c, "\xEF\xBB\xBF", 3)) {
         c += 3;
     }
 
