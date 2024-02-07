@@ -1190,6 +1190,81 @@ error:
 }
 
 int
+WinCEShell_SetupRegistry()
+{
+    HKEY hKey, hSubKey;
+    wchar_t progName[MAX_PATH + 1];
+    wchar_t wstr[MAX_PATH + 1];
+    static int done = 0;
+
+    if (done)
+        return 0;
+
+    if (!GetModuleFileName(NULL, progName, MAX_PATH + 1))
+        return -1;
+
+    switch (RegCreateKeyEx(HKEY_CLASSES_ROOT, L".py", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hKey,
+                           NULL)) {
+        case ERROR_SUCCESS:
+            break;
+        default:
+            return -1;
+    }
+    switch (RegSetValueEx(hKey, L"Default", 0, REG_SZ, (LPBYTE)(L"pyfile"),
+                          (DWORD)(7 * sizeof(wchar_t)))) {
+        case ERROR_SUCCESS:
+            break;
+        default:
+            RegCloseKey(hKey);
+            return -1;
+    }
+    RegCloseKey(hKey);
+
+    switch (RegCreateKeyEx(HKEY_CLASSES_ROOT, L"pyfile", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL,
+                           &hKey, NULL)) {
+        case ERROR_SUCCESS:
+            break;
+        default:
+            return -1;
+    }
+    if (RegCreateKeyEx(hKey, L"DefaultIcon", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hSubKey,
+                       NULL) == ERROR_SUCCESS) {
+        swprintf(wstr, L"%ls, 2", progName);
+        if (RegSetValueEx(hSubKey, L"Default", 0, REG_SZ, (LPBYTE)wstr,
+                          (DWORD)(wcslen(wstr) * sizeof(wchar_t))) != ERROR_SUCCESS) {
+            RegCloseKey(hSubKey);
+            RegCloseKey(hKey);
+            return -1;
+        }
+    }
+    else {
+        RegCloseKey(hKey);
+        return -1;
+    }
+    RegCloseKey(hSubKey);
+
+    if (RegCreateKeyEx(hKey, L"shell\\open\\command", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL,
+                       &hSubKey, NULL) == ERROR_SUCCESS) {
+        swprintf(wstr, L"\"%ls\" \"%%1\"", progName);
+        if (RegSetValueEx(hSubKey, L"Default", 0, REG_SZ, (LPBYTE)wstr,
+                          (DWORD)(wcslen(wstr) * sizeof(wchar_t))) != ERROR_SUCCESS) {
+            RegCloseKey(hSubKey);
+            RegCloseKey(hKey);
+            return -1;
+        }
+    }
+    else {
+        RegCloseKey(hKey);
+        return -1;
+    }
+    RegCloseKey(hSubKey);
+
+    RegCloseKey(hKey);
+    done = 1;
+    return 0;
+}
+
+int
 WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, int nCmdShow)
 {
     DWORD dwThId;
@@ -1216,6 +1291,10 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
 
     wince_environ = _env;
     wince_wenviron = _wenv;
+
+    // Registry
+    if (WinCEShell_SetupRegistry() < 0)
+        MessageBox(NULL, L"failed to setup registry", L"WARNING", MB_OK);
 
     ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, L"initializedEv");
     ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeEv");
