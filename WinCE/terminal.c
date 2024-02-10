@@ -1229,7 +1229,7 @@ WinCEShell_SetupRegistry()
     }
     if (RegCreateKeyEx(hKey, L"DefaultIcon", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hSubKey,
                        NULL) == ERROR_SUCCESS) {
-        swprintf(wstr, L"%ls, 2", progName);
+        swprintf(wstr, L"%ls, -2", progName);
         if (RegSetValueEx(hSubKey, L"Default", 0, REG_SZ, (LPBYTE)wstr,
                           (DWORD)(wcslen(wstr) * sizeof(wchar_t))) != ERROR_SUCCESS) {
             RegCloseKey(hSubKey);

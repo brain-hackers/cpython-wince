@@ -898,7 +898,7 @@ $(IO_OBJS): $(IO_H)
 
 PC/python_exe.o: $(srcdir)/PC/python_exe.rc $(srcdir)/PCbuild/field3.py $(srcdir)/PC/python_ver_rc.h
 	(echo "/*" && $(PYTHON_FOR_BUILD) $(srcdir)/PCbuild/field3.py && cat $(srcdir)/PC/python_exe.rc) \
-		| $(WINDRES) --input-format=rc -I$(srcdir)/PC -I$(srcdir)/Include -o $@
+		| $(WINDRES) --input-format=rc -I$(srcdir)/PC -I$(srcdir)/Include -DMS_WINCE -o $@
 
 .PHONY: regen-pegen-metaparser
 regen-pegen-metaparser:
