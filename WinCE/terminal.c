@@ -1293,8 +1293,11 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     wince_wenviron = _wenv;
 
     // Registry
-    if (WinCEShell_SetupRegistry() < 0)
-        MessageBox(NULL, L"failed to setup registry", L"WARNING", MB_OK);
+    char *associateReg = wince_getenv("PYTHONASSOCIATEREG");
+    if (associateReg != NULL && strcmp(associateReg, "1") == 0) {
+        if (WinCEShell_SetupRegistry() < 0)
+            MessageBox(NULL, L"failed to setup registry", L"WARNING", MB_OK);
+    }
 
     ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, L"initializedEv");
     ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeEv");

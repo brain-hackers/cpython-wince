@@ -145,7 +145,12 @@ static const char usage_6[] =
 "   debugger. It can be set to the callable of your debugger of choice.\n"
 "PYTHONDEVMODE: enable the development mode.\n"
 "PYTHONPYCACHEPREFIX: root directory for bytecode cache (pyc) files.\n"
-"PYTHONWARNDEFAULTENCODING: enable opt-in EncodingWarning for 'encoding=None'.\n";
+"PYTHONWARNDEFAULTENCODING: enable opt-in EncodingWarning for 'encoding=None'.\n"
+#ifdef MS_WINCE
+"PYTHONASSOCIATEREG: if set to 1, associate '.py' with registry.\n"
+"   This works even if -E is given (Windows CE)\n"
+#endif
+"";
 
 #if defined(MS_WINDOWS)
 #  define PYTHONHOMEHELP "<prefix>\\python{major}{minor}"
