@@ -1103,7 +1103,7 @@ WinCEShell_PrepareEnv()
 int
 WinCEShell_LoadEnvFromFile(wchar_t *filename)
 {
-    char *c, *d;
+    char *c, *d, *e;
     static wchar_t *wtext;
     char *text;
     int textlen;
@@ -1172,8 +1172,35 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
         if (c != NULL) {
             *c = '\0';
         }
-        if (*d != '#' && strlen(d) > 0 && _putenv(d) < 0) {
-            goto error;
+        if (*d != '#' && strlen(d) > 0) {
+            if (strchr(d, '=') == NULL)
+                goto error;
+
+            char *envstr = (char *)calloc(strlen(d) + 1, sizeof(char));
+            if (envstr == NULL)
+                goto error;
+
+            e = envstr;
+            while (*d != ' ' && *d != '=') {
+                *e = *d;
+                d++;
+                e++;
+            }
+            if (strspn(d, "= ") <= strcspn(d, "=")) {
+                free(envstr);
+                goto error;
+            }
+
+            *e = '=';
+            d += strspn(d, "= ");
+            strcpy(e + 1, d);
+
+            if (wince_putenv(envstr) < 0) {
+                free(envstr);
+                goto error;
+            }
+
+            free(envstr);
         }
         if (c == NULL)
             break;
