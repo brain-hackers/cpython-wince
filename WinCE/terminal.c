@@ -1172,7 +1172,7 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
         if (c != NULL) {
             *c = '\0';
         }
-        if (_putenv(d) < 0) {
+        if (*d != '#' && strlen(d) > 0 && _putenv(d) < 0) {
             goto error;
         }
         if (c == NULL)
