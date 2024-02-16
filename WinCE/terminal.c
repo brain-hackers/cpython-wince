@@ -16,8 +16,7 @@ HWND hConsoleWindow;
 
 HANDLE hTh;
 HANDLE ghInitializedEv;
-HANDLE ghFinalizeEv;
-HANDLE ghFinalizeDoneEv;
+HANDLE ghPythonDoneEv;
 HANDLE ghReadlineEv;
 HANDLE ghReadlinePopEv;
 HANDLE ghWriteConsoleEv;
@@ -139,6 +138,9 @@ WNDPROC TextInputProc, ShellLogProc;
 void
 SetCmdline(HWND hWnd)
 {
+    if (Exited) {
+        return;
+    }
     SetWindowText(hWnd, curText);
     UpdateWindow(hWnd);
 }
@@ -146,6 +148,9 @@ SetCmdline(HWND hWnd)
 void
 SetPrefix(HWND hWnd)
 {
+    if (Exited) {
+        return;
+    }
     if (prefixText != NULL)
         prefixW = CalcTextWidth(wcsnlen(prefixText, 64));
     else
@@ -158,6 +163,9 @@ SetPrefix(HWND hWnd)
 void
 SetShelllog(HWND hWnd)
 {
+    if (Exited) {
+        return;
+    }
     HDC hdc;
     RECT rc;
     rc.right = W_WIDTH;
@@ -199,6 +207,8 @@ addReadline(wchar_t *text)
         defalut:
             return 0;
     }
+    if (Exited)
+        return 1;
     ResetEvent(ghReadlineEv);
     wchar_t **tmpBuf;
     tmpBuf = (wchar_t **)realloc(readlineBuf, (readlineBufLen + 1) * sizeof(wchar_t *));
@@ -238,12 +248,11 @@ popReadline(wchar_t *output)
     ResetEvent(ghReadlinePopEv);
     wchar_t **tmpBuf;
     if (readlineBufLen == 1) {
-        ResetEvent(ghReadlineEv);
         SetEvent(ghReadlinePopEv);
-        if (!Exited)
-            return 0;
-        else
+        if (Exited)
             return -1;
+        ResetEvent(ghReadlineEv);
+        return 0;
     }
     if (readlineBuf[1] == NULL)
         return 0;
@@ -274,6 +283,7 @@ WinCEShell_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prefix)
         return NULL;
     int res;
     wchar_t *tmp;
+    char *result;
     int prefixLen = 0;
     tmp = (wchar_t *)calloc(65536, sizeof(wchar_t));
     if (tmp == NULL)
@@ -301,13 +311,12 @@ WinCEShell_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prefix)
     }
     if (res < 0) {
         free(tmp);
-        PyErr_SetString(PyExc_SystemExit, "");
-        return NULL;
+        result = (char *)PyMem_RawCalloc(1, sizeof(char));
+        return result;
     }
     int c;
     if (tmp != NULL)
         WinCEShell_WriteConsole(NULL, tmp, wcslen(tmp), &c, NULL);
-    char *result;
     int n;
     n = WideCharToMultiByte(CP_UTF8, 0, tmp + prefixLen, -1, NULL, 0, NULL, NULL);
     result = (char *)PyMem_RawCalloc(n, sizeof(char));
@@ -592,7 +601,8 @@ WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 DeleteObject(fgBrush);
             if (bgBrush)
                 DeleteObject(bgBrush);
-            Exited = 1;
+            if (!Exited)
+                Exited = 2;
             PostQuitMessage(0);
             break;
         default:
@@ -607,6 +617,13 @@ typedef struct {
     LPWSTR lpsCmdLine;
     int nCmdShow;
 } WINCE_SHELL_ARGS;
+
+int
+_call_py_exit(void *arg)
+{
+    Py_Exit(0);
+    return 0;
+}
 
 int
 WinCEShell(HINSTANCE hCurInst)
@@ -660,9 +677,25 @@ WinCEShell(HINSTANCE hCurInst)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    SetEvent(ghReadlineEv);
-    WaitForSingleObject(ghFinalizeEv, INFINITE);
-    SetEvent(ghFinalizeDoneEv);
+
+    if (Exited == 2) {  // The window was destroyed by the user
+
+        // Let Python exit
+        PyGILState_STATE state = PyGILState_Ensure();
+        Py_AddPendingCall(&_call_py_exit, NULL);
+        PyGILState_Release(state);
+
+        // Let readline tell Python EOF
+        SetEvent(ghReadlineEv);
+
+        // Wait 5 sec for Python exiting
+        WaitForSingleObject(ghPythonDoneEv, 5000);
+
+        if (Exited != 1) {
+            // Python could not exit by the deadline
+            exit(0);
+        }
+    }
 
     return 0;
 }
@@ -805,7 +838,7 @@ WinCEShell_WriteConsole(HANDLE handle, wchar_t *lpBuffer, DWORD nNumberOfCharsTo
     long len;
     int redraw = 0;
 
-    if (lpBuffer == NULL)
+    if (lpBuffer == NULL || Exited)
         return 0;
     /*if (wcsnlen(lpBuffer, nNumberOfCharsToWrite+1) == nNumberOfCharsToWrite+1)
     {
@@ -866,22 +899,36 @@ WinCEShell_ReadConsole(HANDLE handle, LPVOID lpBuffer, DWORD nNumberOfCharsToRea
 }
 
 void
-WinCEShell_Cleanup()
+WinCEShell_CleanUp()
 {
     if (wargv != NULL) {
         for (int i = 0; i < argc; i++) free(wargv[i]);
         free(wargv);
+        wargv = NULL;
     }
     if (_env != NULL) {
         for (int i = 0; _env[i] != NULL; i++) free(_env[i]);
         free(_env);
+        _env = NULL;
     }
     if (_wenv != NULL) {
         for (int i = 0; _wenv[i] != NULL; i++) free(_wenv[i]);
         free(_wenv);
+        _wenv = NULL;
     }
-    SetEvent(ghFinalizeEv);
-    WaitForSingleObject(ghFinalizeDoneEv, 10);
+    if (history != NULL) {
+        for (int i = 0; history[i] != NULL; i++) free(history[i]);
+        free(history);
+        history = NULL;
+    }
+    if (readlineBuf != NULL) {
+        for (int i = 0; readlineBuf[i] != NULL; i++) free(readlineBuf[i]);
+        free(readlineBuf);
+        readlineBuf = NULL;
+    }
+    free(prefixText);
+    free(curText);
+    free(logBuf);
 }
 
 char *
@@ -1296,13 +1343,17 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
 {
     DWORD dwThId;
     int exitcode;
-    char *result;
     char *prefix = "";
     wchar_t env_ini[PATH_MAX + 1];
 
     WINCE_SHELL_ARGS shellArgs = {0};
 
     PyOS_ReadlineFunctionPointer = &WinCEShell_readline;  // defined at Parser/myreadline.c
+
+    if (atexit(WinCEShell_CleanUp)) {
+        MessageBox(NULL, L"Could not register cleanup function with atexit", L"ERROR", MB_OK);
+        return -1;
+    }
 
     if (!GetModuleFileName(NULL, env_ini, MAX_PATH + 1)) {
         return -1;
@@ -1327,8 +1378,7 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     }
 
     ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, NULL);
-    ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, NULL);
-    ghFinalizeDoneEv = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ghPythonDoneEv = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     if (showConsole) {
         hTh = CreateThread(NULL, 0, WinCEShell, hCurInst, 0, &dwThId);
@@ -1337,9 +1387,6 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     WaitForSingleObject(ghInitializedEv, INFINITE);
 
     wargv = CommandLineToArgvW(GetCommandLine(), &argc);
-    if (Py_AtExit(&WinCEShell_Cleanup) < 0)
-        MessageBox(NULL, L"Py_AtExit returned -1 so cleanup will not work correctly.", L"WARNING",
-                   MB_OK);
 
     if (wargv == NULL) {
         MessageBox(NULL, L"Failed to parse the command line", L"ERROR", MB_OK);
@@ -1352,9 +1399,10 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     if (exitcode)
         MessageBox(NULL, L"returned code was not 0", L"ERROR", MB_OK);
 
+    Exited = 1;
+    SetEvent(ghPythonDoneEv);
+    PostMessage(hConsoleWindow, WM_CLOSE, 0, 0);
     WaitForSingleObject(hTh, INFINITE);
     CloseHandle(hTh);
-    free(history);
-    free(result);
     return 0;
 }
