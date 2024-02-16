@@ -642,10 +642,10 @@ WinCEShell(HINSTANCE hCurInst)
         UpdateWindow(hConsoleWindow);
     }
 
-    ghReadlineEv = CreateEvent(NULL, TRUE, FALSE, L"readlineEv");
-    ghReadlinePopEv = CreateEvent(NULL, TRUE, TRUE, L"readlinePopEv");
-    ghWriteConsoleEv = CreateEvent(NULL, TRUE, TRUE, L"WriteConsoleEv");
-    ghWaitForCharEv = CreateEvent(NULL, TRUE, FALSE, L"waitForCharEv");
+    ghReadlineEv = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ghReadlinePopEv = CreateEvent(NULL, TRUE, TRUE, NULL);
+    ghWriteConsoleEv = CreateEvent(NULL, TRUE, TRUE, NULL);
+    ghWaitForCharEv = CreateEvent(NULL, TRUE, FALSE, NULL);
     SetEvent(ghInitializedEv);
 
     MSG msg;
@@ -1326,9 +1326,9 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
             MessageBox(NULL, L"failed to setup registry", L"WARNING", MB_OK);
     }
 
-    ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, L"initializedEv");
-    ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeEv");
-    ghFinalizeDoneEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeDoneEv");
+    ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ghFinalizeDoneEv = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     if (showConsole) {
         hTh = CreateThread(NULL, 0, WinCEShell, hCurInst, 0, &dwThId);
