@@ -7,6 +7,10 @@
 #define ID_TEXTINPUT 2
 #define ID_PREFIX 3
 
+#ifndef WINCE_HASH
+#define WINCE_HASH ""
+#endif
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 wchar_t **wargv;
@@ -38,6 +42,8 @@ LONG W_WIDTH, W_HEIGHT;
 LONG fontW, fontH, fontPadX, fontPadY = 0L;
 BOOL PaintInitDone = FALSE;
 int Exited = 0;
+
+int _wince_hash_checked = 0;
 
 #define BUILD_PYTHONW_FOR_WINCE 1
 
@@ -1339,8 +1345,27 @@ WinCEShell_SetupRegistry()
 }
 
 int
+WinCEShell_CheckHash(char *exe_hash)
+{
+    const char *dll_hash = WINCE_HASH;
+    _wince_hash_checked = 1;
+
+    if (!strcmp(dll_hash, exe_hash))
+        return 1;
+
+    // Hashes conflict.
+    MessageBox(NULL, L"different hash for exe and dll", L"ERROR", MB_OK);
+    return 0;
+}
+
+int
 WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, int nCmdShow)
 {
+    if (!_wince_hash_checked) {
+        MessageBox(NULL, L"hash not checked", L"ERROR", MB_OK);
+        return -1;
+    }
+
     DWORD dwThId;
     int exitcode;
     char *prefix = "";

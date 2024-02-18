@@ -284,6 +284,9 @@ COVERAGE_INFO=	$(abs_builddir)/coverage.info
 COVERAGE_REPORT=$(abs_builddir)/lcov-report
 COVERAGE_REPORT_OPTIONS=--no-branch-coverage --title "CPython lcov report"
 
+# WinCE hash
+HASH_FUNC=	@HASH_FUNC@
+WINCE_HASH=	
 
 # === Definitions added by makesetup ===
 
@@ -524,6 +527,18 @@ all:		@DEF_MAKE_ALL_RULE@
 build_all:	check-clean-src $(BUILDPYTHON) oldsharedmods sharedmods gdbhooks \
 		python-config
 
+# Generate hash for WinCE.
+.PHONY: wince-gen-hash
+wince-gen-hash: $(LIBRARY_OBJS) $(srcdir)/Programs/python.o
+	@if test $(MACHDEP) = wince ; then \
+		: $(eval WINCE_HASH = $(word 1,$(shell cat $(LIBRARY_OBJS) | $(HASH_FUNC) - -z))) ; \
+		rm -f "$(srcdir)/WinCE/terminal.o" "$(srcdir)/Programs/python.o" ; \
+		echo Hash: $(WINCE_HASH); \
+		for i in WinCE/terminal Programs/python; do \
+			$(CC) -c $(PY_CORE_CFLAGS) -DWINCE_HASH=\"$(WINCE_HASH)\" -o $(srcdir)/$$i.o $(srcdir)/$$i.c ; \
+		done ; \
+	fi
+
 # Check that the source is clean when building out of source.
 check-clean-src:
 	@if test -n "$(VPATH)" -a -f "$(srcdir)/Programs/python.o"; then \
@@ -685,7 +700,9 @@ sharedmods: $(BUILDPYTHON) pybuilddir.txt Modules/_math.o
 
 
 # Build static library
-$(LIBRARY): $(LIBRARY_OBJS)
+$(LIBRARY): \
+	$(if $(shell echo -n $(MACHDEP) | sed s/^wince$//),,wince-gen-hash) \
+	$(LIBRARY_OBJS)
 	-rm -f $@
 	$(AR) $(ARFLAGS) $@ $(LIBRARY_OBJS)
 
@@ -1756,7 +1773,7 @@ inclinstall:
 		echo $(INSTALL_DATA) $$i $(INCLUDEPY)/internal; \
 		$(INSTALL_DATA) $$i $(DESTDIR)$(INCLUDEPY)/internal; \
 	done
-	@if $(MACHDEP) == "wince"; then \
+	@if test $(MACHDEP) = wince; then \
 		$(INSTALL_DATA) PC/pyconfig.h $(DESTDIR)$(CONFINCLUDEPY)/pyconfig.h; \
 	else	$(INSTALL_DATA) pyconfig.h $(DESTDIR)$(CONFINCLUDEPY)/pyconfig.h; \
 	fi

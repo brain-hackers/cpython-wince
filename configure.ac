@@ -1055,6 +1055,18 @@ case $ac_sys_system in
 esac
 AC_SUBST(WINDRES)
 
+# On WinCE, dlls with a same name cannot be loaded separately at the same time.
+# Including a hash in both exe and dll can prevent loading wrong dll.
+AC_CHECK_TOOLS([HASH_FUNC], [md5sum], [:])
+case $ac_sys_system in
+  WinCE*)
+    case "$HASH_FUNC" in
+      :)
+        HASH_FUNC=""
+    esac
+esac
+AC_SUBST(HASH_FUNC)
+
 # LINKCC is the command that links the python executable -- default is $(CC).
 # If CXX is set, and if it is needed to link a main function that was
 # compiled with CXX, LINKCC is CXX instead. Always using CXX is undesirable:

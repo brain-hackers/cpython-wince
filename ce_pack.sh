@@ -18,7 +18,7 @@ mv libpython3.10.zip ../../../wince_build/
 
 cd ../../../
 
-ls build/lib.wince-arm-3.10/*.so -d | sed 's/\.cpython.*//' | sed 's/^.*\///' | awk '{printf "cp build/lib.wince-arm-3.10/"$1".cpython-310-*.so  wince_build/"$1".pyd\n"}' | bash
+ls build/lib.wince-arm-3.10/*.so -d | sed 's/\.cpython.*//' | sed 's/^.*\///' | awk '{printf "cp build/lib.wince-arm-3.10/"$1".cpython-310-*.so  wince_build/"$1".cp310-wince_arm.pyd\n"}' | bash
 
 if test -a wince_build/libpython3.10d.dll; then mv wince_build/libpython3.10.zip wince_build/libpython3.10d.zip; fi
 

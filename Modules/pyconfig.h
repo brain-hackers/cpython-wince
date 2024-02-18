@@ -263,6 +263,8 @@ typedef int pid_t;
 #  define COMPILER "[gcc]"
 #else
 #  define COMPILER "[arm-mingw32ce-gcc " __VERSION__ "]"
+#  undef PYD_PLATFORM_TAG
+#  define PYD_PLATFORM_TAG "wince_arm" 
 #endif
 #define PY_LONG_LONG long long
 #define PY_LLONG_MIN LLONG_MIN
