@@ -2692,7 +2692,8 @@ wchar_t **
 CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
 {
     wchar_t **argv;
-    argv = (wchar_t **)calloc(64, sizeof(wchar_t *));
+    int argvSize = 64;
+    argv = (wchar_t **)calloc(argvSize, sizeof(wchar_t *));
     if (argv == NULL)
         return NULL;
 
@@ -2712,7 +2713,7 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
 
     wchar_t *argTmp;
     wchar_t *argTmpOrg;
-    argTmpOrg = (wchar_t *)calloc(64, sizeof(wchar_t));
+    argTmpOrg = (wchar_t *)calloc(argTmpSize, sizeof(wchar_t));
     argTmp = argTmpOrg;
 
     if (argTmp == NULL) {
@@ -2720,13 +2721,13 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         return NULL;
     }
 
-    wchar_t exeName[64] = L"";
+    wchar_t exeName[MAX_PATH + 1] = L"";
     if (exeName == NULL) {
         free(argv);
         free(argTmpOrg);
         return NULL;
     }
-    GetModuleFileName(NULL, exeName, 64);
+    GetModuleFileName(NULL, exeName, MAX_PATH + 1);
     argv[0] = exeName;
 
     while (i < cmdlen) {
@@ -2739,12 +2740,13 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
             argc++;
         }
         if (i2 >= argTmpSize) {
-            wchar_t *tmp = realloc(argTmpOrg, (argTmpSize += 16) * sizeof(wchar_t));
+            argTmpSize += 16;
+            wchar_t *tmp = (wchar_t *)realloc(argTmpOrg, argTmpSize * sizeof(wchar_t));
             if (tmp == NULL) {
                 error = 1;
                 break;
             }
-            argTmp = tmp + (argTmpOrg - argTmp);
+            argTmp = tmp + (argTmp - argTmpOrg);
             argTmpOrg = tmp;
         }
         if (*curChar == L'\\') {
@@ -2754,13 +2756,13 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         }
         if (*curChar == L'"') {
             if (i2 + (backslash + 1) / 2 >= argTmpSize) {
-                wchar_t *tmp = realloc(
-                    argTmpOrg, sizeof(wchar_t) * (argTmpSize += 16 * ((backslash + 1) / 2)));
+                argTmpSize += 16 * ((backslash + 1) / 2);
+                wchar_t *tmp = (wchar_t *)realloc(argTmpOrg, argTmpSize * sizeof(wchar_t));
                 if (tmp == NULL) {
                     error = 1;
                     break;
                 }
-                argTmp = tmp + (argTmpOrg - argTmp);
+                argTmp = tmp + (argTmp - argTmpOrg);
                 argTmpOrg = tmp;
             }
             for (int index = 0; index < backslash; index += 2) {
@@ -2796,11 +2798,31 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
                 error = 1;
                 break;
             }
-            wcscpy(argv[argc - 1], argTmpOrg);
+            wcsncpy(argv[argc - 1], argTmpOrg, i2);
+            if (argTmpSize > 64) {
+                argTmpSize = 64;
+                free(argTmpOrg);
+                argTmpOrg = (wchar_t *)calloc(argTmpSize, sizeof(wchar_t));
+                if (argTmpOrg == NULL) {
+                    error = 1;
+                    break;
+                }
+            }
+            else {
+                wmemset(argTmpOrg, L'\0', i2);
+            }
             argTmp = argTmpOrg;
-            wmemset(argTmpOrg, L'\0', i2);
             spaced = 1;
             curChar++;
+            if (argvSize >= argc) {
+                argvSize += 16;
+                argv = (wchar_t **)realloc(argv, argvSize * sizeof(wchar_t *));
+                if (argv == NULL) {
+                    free(argTmpOrg);
+                    error = 1;
+                    break;
+                }
+            }
             continue;
         }
         *argTmp = *curChar;
@@ -2816,7 +2838,7 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         return NULL;
     }
 
-    wchar_t **result = realloc(argv, sizeof(wchar_t *) * argc);
+    wchar_t **result = (wchar_t **)realloc(argv, sizeof(wchar_t *) * (argc + 1));
     if (result != NULL) {
         *pNumArgs = argc;
     }
@@ -2824,6 +2846,7 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         free(argv);
     }
     free(argTmpOrg);
+    result[argc] = 0;
     return result;
 }
 
