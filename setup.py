@@ -37,7 +37,7 @@ os.environ.update({
 })
 
 os.name = "ce"
-sys.platform = "wince-arm"
+sys.platform = "wince"
 
 import sysconfig
 import warnings

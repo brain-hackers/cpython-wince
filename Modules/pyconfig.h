@@ -350,7 +350,7 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 # ifndef MS_WINCE
 #       define PLATFORM "win32"
 # else
-#       define PLATFORM "wince-arm"
+#       define PLATFORM "wince"
 # endif
 #       define HAVE_LARGEFILE_SUPPORT
 #       define SIZEOF_VOID_P 4

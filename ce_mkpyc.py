@@ -25,7 +25,7 @@ for py in srcfiles:
             flist.append(output[len(base_path):])
         else:
             flist.append(output[len(base_path):] + "c")
-    elif "__pycache__" not in py and not py.endswith(".pyc"):
+    elif "__pycache__" not in py and not py.endswith(".pyc") and not py.startswith(base_path + 'lib-dynload/') and py != base_path + 'lib-dynload':
         flist.append(py[len(base_path):])
 
 
