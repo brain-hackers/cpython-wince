@@ -11,11 +11,10 @@ export LD=$TOOL_PREFIX-ld
 export READELF=$TOOL_PREFIX-readelf
 export WINDRES=$TOOL_PREFIX-windres
 export LIBS="-lcoredll6 -lcoredll -lm -laygshell -lws2 -lcommctrl"
-export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./zlib-src -I./Modules/_ctypes/libffi_arm_wince"
-export LDFLAGS="-fno-strict-aliasing"
+export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./Modules/_ctypes/libffi_arm_wince -I./WinCE/zlib/include"
+export LDFLAGS="-fno-strict-aliasing -L./WinCE/zlib/lib"
 export CPPFLAGS="-fvisibility=hidden"
 export LIBFFI_INCLUDEDIR="Modules/_ctypes/libffi-arm-wince"
-export ZLIBDIR="./zlib-src"
 
 PY_DEBUG='no';
 

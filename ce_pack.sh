@@ -22,6 +22,6 @@ ls build/lib/python3.10/lib-dynload/*.so -d | sed 's/\.cpython.*//' | sed 's/^.*
 
 if test -a wince_build/libpython3.10d.dll; then mv wince_build/libpython3.10.zip wince_build/libpython3.10d.zip; fi
 
-cp -r tk84.dll tcl84.dll celib.dll tcl8.4.3 wince_build/
+cp -r tk84.dll tcl84.dll celib.dll zlib1.dll tcl8.4.3 wince_build/
 
 echo "Done."
