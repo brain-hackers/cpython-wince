@@ -10,14 +10,12 @@ wmain(int argc, wchar_t **argv)
 }
 #elif defined(MS_WINCE)
 
-#ifndef WINCE_HASH
-#define WINCE_HASH ""
-#endif
+extern char* WinCEShell_ExeHash;
 
 int
 WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, wchar_t *lpsCmdLine, int nCmdShow)
 {
-    if (!WinCEShell_CheckHash(WINCE_HASH))
+    if (!WinCEShell_CheckHash(WinCEShell_ExeHash))
         return -1;
     return WinCEShell_WinMain(hCurInst, hPrevInst, lpsCmdLine, nCmdShow);
 }

@@ -7,10 +7,6 @@
 #define ID_TEXTINPUT 2
 #define ID_PREFIX 3
 
-#ifndef WINCE_HASH
-#define WINCE_HASH ""
-#endif
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 wchar_t **wargv;
@@ -44,6 +40,8 @@ BOOL PaintInitDone = FALSE;
 int Exited = 0;
 
 int _wince_hash_checked = 0;
+
+extern char *WinCEShell_DllHash;
 
 #define BUILD_PYTHONW_FOR_WINCE 1
 
@@ -1347,10 +1345,9 @@ WinCEShell_SetupRegistry()
 int
 WinCEShell_CheckHash(char *exe_hash)
 {
-    const char *dll_hash = WINCE_HASH;
     _wince_hash_checked = 1;
 
-    if (!strcmp(dll_hash, exe_hash))
+    if (!strcmp(WinCEShell_DllHash, exe_hash))
         return 1;
 
     // Hashes conflict.
