@@ -247,7 +247,9 @@ int _locking(int fd, int mode, long nbytes);
 #define OpenProcessToken(p, d, t) (0)
 #define AdjustTokenPrivileges(t, d, n, b, p, r) (0)
 
-#define GetSystemTimeAdjustment(t, i, d) (0)
+int wince_GetSystemTimeAdjustment(unsigned long *lpTimeAdjustment, unsigned long *lpTimeIncrement,
+                                  int *lpTimeAdjustmentDisabled);
+#define GetSystemTimeAdjustment wince_GetSystemTimeAdjustment
 
 #define GetFileInformationByHandleEx(h, c, i, s) (GetFileInformationByHandle(h, i))
 #define OpenFileMapping(d, i, n) (NULL)

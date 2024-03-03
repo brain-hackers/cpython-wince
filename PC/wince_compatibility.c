@@ -817,6 +817,16 @@ GetSystemTimeAsFileTime(FILETIME *lpSystemTimeAsFileTime)
     SystemTimeToFileTime(&systime, lpSystemTimeAsFileTime);
 }
 
+int
+wince_GetSystemTimeAdjustment(unsigned long *lpTimeAdjustment, unsigned long *lpTimeIncrement,
+                              int *lpTimeAdjustmentDisabled)
+{
+    *lpTimeAdjustment = 0L;
+    *lpTimeIncrement = 0L;
+    *lpTimeAdjustmentDisabled = 1;
+    return 1;
+}
+
 static char standard_name[32] = "GMT";
 static char daylight_name[32] = "GMT";
 char *tzname[2] = {standard_name, daylight_name};

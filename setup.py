@@ -1031,7 +1031,10 @@ class PyBuildExt(build_ext):
         #    self.missing.append('spwd')
 
         # select(2); not on ancient System V
-        #self.add(Extension('select', ['selectmodule.c']))
+        if not WINCE:
+            self.add(Extension('select', ['selectmodule.c']))
+        else:
+            self.add(Extension('select', ['selectmodule.c'], libraries=['ws2']))
 
         # Memory-mapped files (also works on Win32).
         self.add(Extension('mmap', ['mmapmodule.c']))
@@ -1275,6 +1278,8 @@ class PyBuildExt(build_ext):
         if MACOS:
             # Issue #35569: Expose RFC 3542 socket options.
             kwargs['extra_compile_args'] = ['-D__APPLE_USE_RFC_3542']
+        if WINCE:
+            kwargs['libraries'] = ['ws2', 'iphlpapi']
 
         self.add(Extension('_socket', ['socketmodule.c'], **kwargs))
 
@@ -1928,7 +1933,7 @@ class PyBuildExt(build_ext):
         #    self.detect_test_extensions()
         self.detect_readline_curses()
         #self.detect_crypt()
-        #self.detect_socket()
+        self.detect_socket()
         #self.detect_openssl_hashlib()
         self.detect_hash_builtins()
         #self.detect_dbm_gdbm()

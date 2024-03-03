@@ -308,8 +308,142 @@ shutdown(how) -- shut down traffic in one or both directions\n\
 #else
 #define IsWindows7SP1OrGreater() (FALSE)
 #define IF_NAMESIZE	16 // FIXME-WINCE: is this correct? 16 is from linux header.
-#define inet_ntop(f, a, b, s) (NULL)
-#define inet_pton(f, s, b) (-1)
+
+#define HAVE_INET_NTOP 1
+#define HAVE_INET_PTON 1
+
+#if 0
+struct _in_addr {
+    union {
+        struct { unsigned char s_b1,s_b2,s_b3,s_b4; } S_un_b;
+        struct { unsigned short s_w1,s_w2; } S_un_w;
+        unsigned long S_addr;
+    } S_un;
+};
+struct _in6_addr {
+    union {
+        unsigned char    Byte[16];
+        unsigned short    Word[8];
+    } u;
+};
+#define in_addr _in_addr
+#define in6_addr _in6_addr
+#endif
+
+wchar_t *
+inet_ntop(int Family, const void *pAddr, wchar_t *pStringBuf, size_t StringBufSize)
+{
+    if (Family != AF_INET && Family != AF_INET6) {
+        return NULL;
+    }
+    if (StringBufSize < 17 || Family == AF_INET6 && StringBufSize < 47) {
+        return NULL;
+    }
+    if (Family == AF_INET) { // IPv4
+        struct in_addr _pAddr;
+        memcpy(&_pAddr, pAddr, sizeof(struct in_addr));
+        swprintf(pStringBuf, L"%u.%u.%u.%u", _pAddr.S_un.S_un_b.s_b1,
+            _pAddr.S_un.S_un_b.s_b2, _pAddr.S_un.S_un_b.s_b3, _pAddr.S_un.S_un_b.s_b4);
+        return pStringBuf;
+    }
+#if 0
+    if (Family == AF_INET6) { // IPv6
+        struct in6_addr _pAddr;
+        memcpy(&_pAddr, pAddr, sizeof(struct in6_addr));
+        if ((_pAddr.u.Byte[0] | _pAddr.u.Byte[1] | _pAddr.u.Byte[2] | _pAddr.u.Byte[3] | _pAddr.u.Byte[4] | _pAddr.u.Byte[5] | _pAddr.u.Byte[6] | _pAddr.u.Byte[7]) == 0 && _pAddr.u.Byte[8] > 0) {
+            // possibly IPv4 compatible
+            if ((_pAddr.u.Byte[8] & _pAddr.u.Byte[9] & _pAddr.u.Byte[10] & _pAddr.u.Byte[11]) == 255) {
+                swprintf(pStringBuf, L"::ffff:%u.%u.%u.%u", _pAddr.u.Byte[12], _pAddr.u.Byte[13], _pAddr.u.Byte[14], _pAddr.u.Byte[15]);
+                return pStringBuf;
+            }
+        }
+
+        // not IPv4 compatible
+        int omit_index = -1;
+        int omit_length = 0;
+        int omit_length_tmp = 0;
+        for (int index = 0; index < 16; index++) {
+            if (!_pAddr.u.Byte[index])
+                omit_length_tmp++;
+            else {
+                if (omit_length_tmp > omit_length)
+                    omit_length = omit_length_tmp;
+                omit_length_tmp = 0;
+            }
+            if (omit_length_tmp > 1 && omit_length_tmp > omit_length && omit_index < index - omit_length_tmp + 1) {
+                omit_index = index - omit_length_tmp + 1;
+            }
+        }
+        if (omit_length_tmp > omit_length)
+            omit_length = omit_length_tmp;
+
+        int is_omitting = 0;
+        *pStringBuf = 0;
+        wchar_t *pStringTmp = pStringBuf;
+        for (int index = 0; index < 16; index++) {
+            if (index == omit_index) {
+                is_omitting = 1;
+                if (index == 0) {
+                    wcscpy(pStringTmp, L"::");
+                    pStringTmp += 2;
+                } else {
+                    wcscpy(pStringTmp, L":");
+                    pStringTmp++;
+                }
+            }
+            if (is_omitting && index >= omit_index + omit_length)
+                is_omitting = 0;
+            if (!is_omitting) {
+                if (index < 15) {
+                    swprintf(pStringTmp, L"%x:", _pAddr.u.Byte[index]);
+                    pStringTmp += wcslen(pStringTmp);
+                } else
+                    swprintf(pStringTmp, L"%x", _pAddr.u.Byte[index]);
+            }
+        }
+        return pStringBuf;
+    }
+#endif
+    return NULL;
+}
+
+int
+inet_pton(int Family, wchar_t *pszAddrString, void *pAddrBuf)
+{
+    wchar_t tmp[4];
+    wchar_t *addrstr;
+    addrstr = pszAddrString;
+    if (Family == AF_INET) {
+        struct in_addr addr;
+        if (wcschr(addrstr, L'.') == NULL ||
+            wcsspn(addrstr, L"0123456789.") < wcslen(addrstr))
+            return 0;
+        wcsncpy(tmp, addrstr, wcschr(addrstr, L'.') - addrstr + 1);
+        *wcschr(tmp, L'.') = 0;
+        addr.S_un.S_un_b.s_b1 = (char)wcstol(tmp, NULL, 10);
+        addrstr += wcslen(tmp) + 1;
+        if (wcschr(addrstr, L'.') == NULL)
+            return 1;
+        wcsncpy(tmp, addrstr, wcschr(addrstr, L'.') - addrstr + 1);
+        *wcschr(tmp, L'.') = 0;
+        addr.S_un.S_un_b.s_b2 = (char)wcstol(tmp, NULL, 10);
+        addrstr += wcslen(tmp) + 1;
+        if (wcschr(addrstr, L'.') == NULL)
+            return 0;
+        wcsncpy(tmp, addrstr, wcschr(addrstr, L'.') - addrstr + 1);
+        *wcschr(tmp, L'.') = 0;
+        addr.S_un.S_un_b.s_b3 = (char)wcstol(tmp, NULL, 10);
+        addrstr += wcslen(tmp) + 1;
+        if (wcschr(addrstr, L'.') != NULL)
+            return 0;
+        addr.S_un.S_un_b.s_b4 = (char)wcstol(addrstr, NULL, 10);
+        memcpy(pAddrBuf, &addr, sizeof(struct in_addr));
+        return 1;
+    }
+    // IPv6 is not yet.
+    return 0;
+}
+
 #define if_nametoindex(i) (0)
 #define if_indextoname(i, name) (NULL)
 #endif
