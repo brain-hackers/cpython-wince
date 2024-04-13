@@ -755,8 +755,16 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 #define HAVE_ERFC 1
 
 /* Define if you have the 'inet_pton' function. */
-#ifndef MS_WINCE
-#  define HAVE_INET_PTON 1
+#define HAVE_INET_PTON 1
+
+/* Define if you have the getaddrinfo function. */
+#ifdef MS_WINCE
+#  define HAVE_GETADDRINFO 1
+#endif
+
+/* Define if you have the getnameinfo function. */
+#ifdef MS_WINCE
+#  define HAVE_GETNAMEINFO 1
 #endif
 
 /* framework name */
