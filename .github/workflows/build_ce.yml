@@ -25,10 +25,7 @@ jobs:
     - name: Install CeGCC
       run: |
         wget https://github.com/brain-hackers/cegcc-build/releases/download/2022-10-26-225811/cegcc-x86_64-2022-10-26-225811.zip -O cegcc.zip
-        unzip cegcc.zip -d /opt
-        export PATH=$PATH:/opt/cegcc/bin
-        export TOOL_PREFIX=/opt/cegcc/bin/arm-mingw32ce
-
+        unzip cegcc.zip -d /opt 
 
     - name: Download Tcl/Tk
       run: wget https://master.dl.sourceforge.net/project/tcltkce/tcltkce/8.4.6/tcltk846ce-arm.zip?viasf=1 -O tcltk.zip
@@ -39,7 +36,10 @@ jobs:
         mv tcltk846ce-arm/bin/*.dll .
     
     - name: Build
-      run: ./ce_build.sh
+      run: |
+        export PATH=$PATH:/opt/cegcc/bin
+        export TOOL_PREFIX=/opt/cegcc/bin/arm-mingw32ce
+        ./ce_build.sh
 
     - name: Pack
       run: ./ce_pack.sh
