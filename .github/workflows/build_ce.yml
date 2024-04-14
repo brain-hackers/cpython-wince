@@ -24,9 +24,11 @@ jobs:
 
     - name: Install CeGCC
       run: |
-        sudo bash -c 'echo "deb [trusted=yes] https://max.kellermann.name/debian cegcc_buster-default main" > /etc/apt/sources.list.d/gcc-arm-mingw32ce.list'
-        sudo apt update
-        sudo apt install gcc-arm-mingw32ce
+        wget https://github.com/brain-hackers/cegcc-build/releases/download/2022-10-26-225811/cegcc-x86_64-2022-10-26-225811.zip -O cegcc.zip
+        unzip cegcc.zip -d /opt
+        export PATH=$PATH:/opt/cegcc/bin
+        export TOOL_PREFIX=/opt/cegcc/bin/arm-mingw32ce
+
 
     - name: Download Tcl/Tk
       run: wget https://master.dl.sourceforge.net/project/tcltkce/tcltkce/8.4.6/tcltk846ce-arm.zip?viasf=1 -O tcltk.zip
