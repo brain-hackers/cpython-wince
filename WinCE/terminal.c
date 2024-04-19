@@ -1223,7 +1223,7 @@ WinCEShell_LoadEnvFromFile(wchar_t *filename)
         if (c != NULL) {
             *c = '\0';
         }
-        if (*d != '#' && strlen(d) > 0) {
+        if (*d != ';' && strlen(d) > 0) {
             if (strchr(d, '=') == NULL)
                 goto error;
 
