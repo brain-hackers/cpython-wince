@@ -27,9 +27,9 @@ with open(os.environ["_PYTHON_PROJECT_BASE"]+"/config.log", mode="r") as f:
 
 tool_prefix = os.environ.get("TOOL_PREFIX", "/usr/bin/arm-mingw32ce")
 os.environ.update({
-        "CC": f"{tool_prefix}-gcc " + ("libpython3.10.dll" if not pydebug else "libpython3.10d.dll"),
-        "LDSHARED": f"{tool_prefix}-gcc -shared "+ ("libpython3.10.dll" if not pydebug else "libpython3.10d.dll") + " --enable-auto-import",
-        "OPT": (os.environ["OPT"] + " " if "OPT" in os.environ else "") + ("libpython3.10.dll" if not pydebug else "libpython3.10d.dll") + " --enable-auto-import",
+        "CC": f"{tool_prefix}-gcc " + ("python310.dll" if not pydebug else "python310d.dll"),
+        "LDSHARED": f"{tool_prefix}-gcc -shared "+ ("python310.dll" if not pydebug else "python310d.dll") + " --enable-auto-import",
+        "OPT": (os.environ["OPT"] + " " if "OPT" in os.environ else "") + ("python310.dll" if not pydebug else "python310d.dll") + " --enable-auto-import",
         "_PYTHON_PROJECT_BASE": os.environ["_PYTHON_PROJECT_BASE"],
         "_PYTHON_HOST_PLATFORM": "wince-arm",
         "PYTHONPATH": os.environ["_PYTHON_PROJECT_BASE"] + "/build/lib.wince-arm-3.10:./Lib",
