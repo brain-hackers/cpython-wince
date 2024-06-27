@@ -199,6 +199,10 @@ precmdline_parse_cmdline(_PyPreCmdline *cmdline)
             if (WinCEShell_LoadEnvFromFile(_PyOS_optarg) < 0)
                 return _PyStatus_ERR("failed to load environment variables from file. Does it really exist?");
             break;
+        case 2:
+            if (_wputenv(_PyOS_optarg))
+                return _PyStatus_ERR("invalid format for --env-set, should be `KEY=VALUE` or `KEY=`");
+            break;
 #endif
         case 'E':
             cmdline->use_environment = 0;

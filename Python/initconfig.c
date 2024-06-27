@@ -106,6 +106,8 @@ static const char usage_3[] = "\
 #ifdef MS_WINCE
 "--env-path path:\n\
     add path to file in which environment variables are defined (Windows CE)\n\
+--env-set KEY=VALUE:\n\
+    set the environment variable named KEY to VALUE (Windows CE)\n\
 "
 #endif
 "";
@@ -2376,7 +2378,8 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
             break;
 #ifdef MS_WINCE
         case 1:
-            /* option handled by _PyPreCmdline_Read() */
+        case 2:
+            /* Long options handled in _PyPreCmdline_Read() */
             break;
 #endif
         case 'b':
