@@ -2525,6 +2525,9 @@ class PyBuildExt(build_ext):
             # libssl and libcrypto not found
             self.missing.extend(['_ssl', '_hashlib'])
             return None, None
+            
+        if WINCE:
+            openssl_libs.append("ws2")
 
         # Find OpenSSL includes
         ssl_incs = find_file(
