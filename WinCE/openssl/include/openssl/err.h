@@ -43,7 +43,7 @@ extern "C" {
 # endif
 
 # include <limits.h>
-# include <errno.h>
+// # include <errno.h>
 
 # define ERR_TXT_MALLOCED        0x01
 # define ERR_TXT_STRING          0x02
