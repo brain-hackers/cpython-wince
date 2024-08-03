@@ -1934,7 +1934,7 @@ class PyBuildExt(build_ext):
         self.detect_readline_curses()
         #self.detect_crypt()
         self.detect_socket()
-        #self.detect_openssl_hashlib()
+        self.detect_openssl_hashlib()
         self.detect_hash_builtins()
         #self.detect_dbm_gdbm()
         self.detect_sqlite()
@@ -2505,6 +2505,9 @@ class PyBuildExt(build_ext):
             # libssl and libcrypto not found
             self.missing.extend(['_ssl', '_hashlib'])
             return None, None
+            
+        if WINCE:
+            openssl_libs.append("ws2")
 
         # Find OpenSSL includes
         ssl_incs = find_file(

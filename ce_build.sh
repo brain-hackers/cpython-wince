@@ -15,6 +15,7 @@ export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT
 export LDFLAGS="-fno-strict-aliasing -L./WinCE/zlib/lib"
 export CPPFLAGS="-fvisibility=hidden"
 export LIBFFI_INCLUDEDIR="Modules/_ctypes/libffi-arm-wince"
+export OPENSSL="./WinCE/openssl"
 
 PY_DEBUG='no';
 
@@ -73,7 +74,9 @@ ac_cv_enable_implicit_function_declaration_error=no \
 --with-pydebug=$PY_DEBUG \
 --with-tcltk-includes="$TCLTK_INCS" \
 --with-tcltk-libs="$TCLTK_LIBS" \
---enable-optimizations |& tee make.log -a || err
+--enable-optimizations \
+--with-openssl-rpath=no \
+--with-openssl=$OPENSSL |& tee make.log -a || err
 
 cat PC/pyconfig.h.org | grep -v "#endif /\* \!Py_CONFIG_H \*/" > PC/pyconfig.h
 cat pyconfig.h PC/pyconfig.h | grep "^#\s*define [A-Z0-9_]*" | sed "s/#\s*define/#define/" | sort | awk '{printf $1" "$2"\n"}' | uniq -c | awk '$1=="1"{printf "#define "$3"\n"}' > pyconfig.pre.tmp
