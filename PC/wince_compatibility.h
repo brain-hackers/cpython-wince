@@ -144,6 +144,8 @@ extern const char *_sys_errlist[];
  * we need to define these as mush as possible.
  */
 
+WINCE_PyAPI_FUNC(char *) strerror(int errnum);
+
 unsigned long getVersion();
 
 void *SecureZeroMemory(void *ptr, size_t cnt);
@@ -357,7 +359,7 @@ void tzset(void);
 
 #undef GetFileType
 
-int wince_GetFileType(void *handle);
+WINCE_PyAPI_FUNC(int) wince_GetFileType(void *handle);
 
 #define GetFileType wince_GetFileType
 
@@ -675,7 +677,7 @@ typedef struct _WIN32_FIND_DATAA WIN32_FIND_DATAA;
 typedef struct _WIN32_FIND_DATAW WIN32_FIND_DATAW;
 typedef void *HANDLE;
 
-HANDLE wince_FindFirstFileW(const wchar_t *filename, WIN32_FIND_DATAW *data);
+WINCE_PyAPI_FUNC(HANDLE) wince_FindFirstFileW(const wchar_t *filename, WIN32_FIND_DATAW *data);
 #define FindFirstFileW wince_FindFirstFileW
 HANDLE FindFirstFileA(const char *filename, WIN32_FIND_DATAA *data);
 

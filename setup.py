@@ -81,6 +81,7 @@ with warnings.catch_warnings():
     from Lib.distutils.core import Extension, setup
     from Lib.distutils.errors import CCompilerError, DistutilsError
     from Lib.distutils.spawn import find_executable
+    from Lib.distutils.unixccompiler import UnixCCompiler
 
 # Compile extensions used to test Python?
 TEST_EXTENSIONS = (sysconfig.get_config_var('TEST_MODULES') == 'yes')
@@ -409,6 +410,10 @@ class PyBuildExt(build_ext):
         self.disabled_configure = []
         if '-j' in os.environ.get('MAKEFLAGS', ''):
             self.parallel = True
+
+    def run(self):
+        build_ext.run(self)
+        self.asmcompiler
 
     def add(self, ext):
         self.extensions.append(ext)
@@ -2303,11 +2308,22 @@ class PyBuildExt(build_ext):
         elif HOST_PLATFORM.startswith('hp-ux'):
             extra_link_args.append('-fPIC')
 
+        elif HOST_PLATFORM.startswith('wince'):
+            sources.extend([
+                '_ctypes/malloc_closure.c',
+                '_ctypes/libffi_arm_wince/ffi.c',
+                '_ctypes/libffi_arm_wince/prep_cif.c',
+                '_ctypes/libffi_arm_wince/debug.c',
+                '_ctypes/libffi_arm_wince/sysv.asm'
+            ])
+            include_dirs.append('_ctypes/libffi_arm_wince')
+            extra_compile_args.append('-DUSING_MALLOC_CLOSURE_DOT_C=1')
+
         ext = Extension('_ctypes',
                         include_dirs=include_dirs,
                         extra_compile_args=extra_compile_args,
                         extra_link_args=extra_link_args,
-                        libraries=[],
+                        libraries=([] if not HOST_PLATFORM.startswith('wince') else ['ole32', 'oleaut32', 'uuid']),
                         sources=sources,
                         depends=depends)
         self.add(ext)

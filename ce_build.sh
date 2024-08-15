@@ -93,7 +93,7 @@ make -j $(nproc) \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
 CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
 
-make install \
+make -j $(nproc) install \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
 CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
 
