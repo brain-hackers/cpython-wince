@@ -394,8 +394,8 @@ int _read(int handle, void *buffer, unsigned int count);
 long _lseek(int handle, long offset, int origin);
 __int64 _lseeki64(int handle, __int64 offset, int origin);
 int _commit(int handle);
-int _dup(int fd);
-#define dup _dup
+WINCE_PyAPI_FUNC(int) wince_dup(int fd);
+#define dup wince_dup
 #define _open_osfhandle(h, m) (h)
 
 #define open _open

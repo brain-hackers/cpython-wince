@@ -120,6 +120,8 @@ CC = os.environ.get("CC")
 if not CC:
     CC = sysconfig.get_config_var("CC")
 
+if WINCE:
+    TEST_EXTENSIONS = False
 
 SUMMARY = """
 Python is an interpreted, interactive, object-oriented programming
@@ -410,10 +412,6 @@ class PyBuildExt(build_ext):
         self.disabled_configure = []
         if '-j' in os.environ.get('MAKEFLAGS', ''):
             self.parallel = True
-
-    def run(self):
-        build_ext.run(self)
-        self.asmcompiler
 
     def add(self, ext):
         self.extensions.append(ext)
@@ -991,7 +989,8 @@ class PyBuildExt(build_ext):
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
 
         # profiler (_lsprof is for cProfile.py)
-        self.add(Extension('_lsprof', ['_lsprof.c', 'rotatingtree.c']))
+        if not WINCE:
+            self.add(Extension('_lsprof', ['_lsprof.c', 'rotatingtree.c']))
         # static Unicode character database
         self.add(Extension('unicodedata', ['unicodedata.c'],
                            depends=['unicodedata_db.h', 'unicodename_db.h'],
@@ -1014,26 +1013,27 @@ class PyBuildExt(build_ext):
         # (If you have a really backward UNIX, select and socket may not be
         # supported...)
 
-        # fcntl(2) and ioctl(2)
-        libs = []
-        if (self.config_h_vars.get('FLOCK_NEEDS_LIBBSD', False)):
-            # May be necessary on AIX for flock function
-            libs = ['bsd']
-        #self.add(Extension('fcntl', ['fcntlmodule.c'],
-        #                   libraries=libs))
-        # pwd(3)
-        #self.add(Extension('pwd', ['pwdmodule.c']))
-        # grp(3)
-        #if not VXWORKS:
-        #    self.add(Extension('grp', ['grpmodule.c']))
-        # spwd, shadow passwords
-        #if (self.config_h_vars.get('HAVE_GETSPNAM', False) or
-        #        self.config_h_vars.get('HAVE_GETSPENT', False)):
-        #    self.add(Extension('spwd', ['spwdmodule.c']))
-        # AIX has shadow passwords, but access is not via getspent(), etc.
-        # module support is not expected so it not 'missing'
-        #elif not AIX:
-        #    self.missing.append('spwd')
+        if not WINCE:
+            # fcntl(2) and ioctl(2)
+            libs = []
+            if (self.config_h_vars.get('FLOCK_NEEDS_LIBBSD', False)):
+                # May be necessary on AIX for flock function
+                libs = ['bsd']
+            self.add(Extension('fcntl', ['fcntlmodule.c'],
+                            libraries=libs))
+            # pwd(3)
+            self.add(Extension('pwd', ['pwdmodule.c']))
+            # grp(3)
+            if not VXWORKS:
+                self.add(Extension('grp', ['grpmodule.c']))
+            # spwd, shadow passwords
+            if (self.config_h_vars.get('HAVE_GETSPNAM', False) or
+                    self.config_h_vars.get('HAVE_GETSPENT', False)):
+                self.add(Extension('spwd', ['spwdmodule.c']))
+            # AIX has shadow passwords, but access is not via getspent(), etc.
+            # module support is not expected so it not 'missing'
+            elif not AIX:
+                self.missing.append('spwd')
 
         # select(2); not on ancient System V
         if not WINCE:
@@ -1046,7 +1046,8 @@ class PyBuildExt(build_ext):
 
         # Lance Ellinghaus's syslog module
         # syslog daemon interface
-        #self.add(Extension('syslog', ['syslogmodule.c']))
+        if not WINCE:
+            self.add(Extension('syslog', ['syslogmodule.c']))
 
         # Python interface to subinterpreter C-API.
         self.add(Extension('_xxsubinterpreters', ['_xxsubinterpretersmodule.c']))
@@ -1071,11 +1072,10 @@ class PyBuildExt(build_ext):
         # CSV files
         self.add(Extension('_csv', ['_csv.c']))
 
-        # POSIX subprocess module helper.
-        #self.add(Extension('_posixsubprocess', ['_posixsubprocess.c'],
-        #                   extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
-        # Windows CE
-        self.add(Extension('winsound', ['PC/winsound.c']))
+        if not WINCE:
+            # POSIX subprocess module helper.
+            self.add(Extension('_posixsubprocess', ['_posixsubprocess.c'],
+                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
 
     def detect_test_extensions(self):
         # Python C API test module
@@ -1704,6 +1704,11 @@ class PyBuildExt(build_ext):
         else:
             self.missing.extend(['resource', 'termios'])
 
+        if WINCE:
+            #self.add(Extension('_overlapped', ['overlapped.c'])) too many things to fix!!!
+            #self.add(Extension('_msi', ['PC/_msi.c']))
+            self.add(Extension('winsound', ['PC/winsound.c']))
+
         # Platform-specific libraries
         if HOST_PLATFORM.startswith(('linux', 'freebsd', 'gnukfreebsd')):
             self.add(Extension('ossaudiodev', ['ossaudiodev.c']))
@@ -1934,23 +1939,24 @@ class PyBuildExt(build_ext):
 
     def detect_modules(self):
         self.detect_simple_extensions()
-        #if TEST_EXTENSIONS:
-        #    self.detect_test_extensions()
+        if TEST_EXTENSIONS:
+            self.detect_test_extensions()
         self.detect_readline_curses()
-        #self.detect_crypt()
+        if not WINCE:
+            self.detect_crypt()
         self.detect_socket()
-        #self.detect_openssl_hashlib()
+        self.detect_openssl_hashlib()
         self.detect_hash_builtins()
-        #self.detect_dbm_gdbm()
+        self.detect_dbm_gdbm()
         self.detect_sqlite()
         self.detect_platform_specific_exts()
         self.detect_nis()
         self.detect_compress_exts()
-        #self.detect_expat_elementtree()
+        self.detect_expat_elementtree()
         self.detect_multibytecodecs()
         #self.detect_decimal()
-        #self.detect_ctypes()
-        #self.detect_multiprocessing()
+        self.detect_ctypes()
+        self.detect_multiprocessing()
         if not self.detect_tkinter():
             self.missing.append('_tkinter')
         self.detect_uuid()
@@ -2311,10 +2317,6 @@ class PyBuildExt(build_ext):
         elif HOST_PLATFORM.startswith('wince'):
             sources.extend([
                 '_ctypes/malloc_closure.c',
-                '_ctypes/libffi_arm_wince/ffi.c',
-                '_ctypes/libffi_arm_wince/prep_cif.c',
-                '_ctypes/libffi_arm_wince/debug.c',
-                '_ctypes/libffi_arm_wince/sysv.asm'
             ])
             include_dirs.append('_ctypes/libffi_arm_wince')
             extra_compile_args.append('-DUSING_MALLOC_CLOSURE_DOT_C=1')
@@ -2323,7 +2325,8 @@ class PyBuildExt(build_ext):
                         include_dirs=include_dirs,
                         extra_compile_args=extra_compile_args,
                         extra_link_args=extra_link_args,
-                        libraries=([] if not HOST_PLATFORM.startswith('wince') else ['ole32', 'oleaut32', 'uuid']),
+                        library_dirs=['.'],
+                        libraries=([] if not HOST_PLATFORM.startswith('wince') else ['ole32', 'oleaut32', 'uuid', 'ffi-8']),
                         sources=sources,
                         depends=depends)
         self.add(ext)

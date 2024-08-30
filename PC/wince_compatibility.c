@@ -1279,7 +1279,7 @@ _commit(int handle)
 }
 
 int
-_dup(int fd)
+wince_dup(int fd)
 {
     HANDLE orgHandle;
     HANDLE newHandle;
