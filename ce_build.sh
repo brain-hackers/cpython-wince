@@ -59,6 +59,12 @@ if [ ! -d build ]; then
     mkdir build
 fi
 
+cd libffi
+./autogen.sh
+./ce_build.sh
+cp arm-unknown-mingw32ce/.libs/libffi-8.dll ../
+cd ..
+
 touch make.log
 
 ac_cv_pthread_is_default=yes ac_cv_cxx_thread=yes ac_cv_file__dev_ptmx=no ac_cv_file__dev_ptc=no ac_cv_have_long_long_format=yes \
