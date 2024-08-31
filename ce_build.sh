@@ -93,7 +93,7 @@ echo "#endif /* !Py_CONFIG_H */" >> PC/pyconfig.h
 #rm pyconfig.tmp pyconfig.pre.tmp
 cp PC/pyconfig.h Modules/
 
-make -j $(nproc) build-openssl \
+make -j $(nproc) python310.dll \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
 CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
 
