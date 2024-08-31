@@ -525,11 +525,6 @@ WinCE/dllhash.o WinCE/exehash.o: $(LIBRARY_OBJS) $(srcdir)/Programs/python.o
 		$(CC) -c $(PY_CORE_CFLAGS) -DWINCE_HASH=\"$(WINCE_HASH)\" -o $@ $(basename $@).c ; \
 	fi
 
-# Generate openssl dll for WinCE.
-.PHONY: build-openssl
-build-openssl: python$(LDVERSION).dll
-	@
-
 # Check that the source is clean when building out of source.
 check-clean-src:
 	@if test -n "$(VPATH)" -a -f "$(srcdir)/Programs/python.o"; then \
