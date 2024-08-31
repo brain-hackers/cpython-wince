@@ -350,3 +350,6 @@ PC/python310/internal/pycore_warnings.h
 .python-version
 pyconfig.pre.tmp
 pyconfig.tmp
+WinCE/openssl/lib/libcrypto.dll
+WinCE/openssl/lib/libssl.dll
+wince_build/init.py

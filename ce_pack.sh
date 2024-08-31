@@ -9,7 +9,8 @@ if test ! -d build/bin; then echo "not built yet!"; exit 1; fi
 
 cp build/bin/python3.10.exe wince_build/
 cp build/bin/*.dll wince_build/
-cp WinCE/openssl/lib/*.dll wince_build/
+cp libcrypto-3.dll wince_build/
+cp libssl-3.dll wince_build/
 cp WinCE/sqlite/lib/libsqlite3.dll wince_build/
 cp WinCE/init.py wince_build/
 

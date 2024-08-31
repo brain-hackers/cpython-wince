@@ -93,6 +93,19 @@ echo "#endif /* !Py_CONFIG_H */" >> PC/pyconfig.h
 #rm pyconfig.tmp pyconfig.pre.tmp
 cp PC/pyconfig.h Modules/
 
+make -j $(nproc) build-openssl \
+BLDSHARED="$TOOL_PREFIX-gcc -shared" \
+CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
+
+cp python310.dll openssl/
+cd openssl
+./Configure no-idea no-mdc2 no-rc5 no-weak-ssl-ciphers no-async no-engine arm-mingw32ce-python
+make build_generated libcrypto-3.dll libssl-3.dll -j$(nproc)
+cp libcrypto-3.dll libssl-3.dll ../
+cp libcrypto-3.dll ../WinCE/openssl/lib/libcrypto.dll
+cp libssl-3.dll ../WinCE/openssl/lib/libssl.dll
+cd ..
+
 make -j $(nproc) install \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
 CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
