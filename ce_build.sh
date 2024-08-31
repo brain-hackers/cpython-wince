@@ -108,6 +108,7 @@ cd openssl
 ./Configure no-idea no-mdc2 no-rc5 no-weak-ssl-ciphers no-async no-engine arm-mingw32ce-python
 make build_generated libcrypto-3.dll libssl-3.dll -j$(nproc)
 cp libcrypto-3.dll libssl-3.dll ../
+ls
 cp libcrypto-3.dll ../WinCE/openssl/lib/libcrypto.dll
 cp libssl-3.dll ../WinCE/openssl/lib/libssl.dll
 cd ..
