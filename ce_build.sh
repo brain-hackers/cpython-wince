@@ -76,7 +76,8 @@ ac_cv_enable_implicit_function_declaration_error=no \
 --with-tcltk-libs="$TCLTK_LIBS" \
 --enable-optimizations \
 --with-openssl-rpath=no \
---with-openssl=$OPENSSL |& tee make.log -a || err
+--with-openssl=$OPENSSL \
+--enable-loadable-sqlite-extensions |& tee make.log -a || err
 
 cat PC/pyconfig.h.org | grep -v "#endif /\* \!Py_CONFIG_H \*/" > PC/pyconfig.h
 cat pyconfig.h PC/pyconfig.h | grep "^#\s*define [A-Z0-9_]*" | sed "s/#\s*define/#define/" | sort | awk '{printf $1" "$2"\n"}' | uniq -c | awk '$1=="1"{printf "#define "$3"\n"}' > pyconfig.pre.tmp
