@@ -109,6 +109,7 @@ cd openssl
 make build_generated libcrypto-3.dll libssl-3.dll -j$(nproc)
 cp libcrypto-3.dll libssl-3.dll ../
 cd ..
+mkdir WinCE/openssl/lib
 cp libcrypto-3.dll WinCE/openssl/lib/libcrypto.dll
 cp libssl-3.dll WinCE/openssl/lib/libssl.dll
 
