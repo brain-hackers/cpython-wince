@@ -113,6 +113,7 @@ mkdir WinCE/openssl/lib
 cp libcrypto-3.dll WinCE/openssl/lib/libcrypto.dll
 cp libssl-3.dll WinCE/openssl/lib/libssl.dll
 
+rm -f WinCE/dllhash.o
 
 make -j $(nproc) install \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
