@@ -518,7 +518,7 @@ WinCE/dllhash.o WinCE/exehash.o: $(LIBRARY_OBJS) $(srcdir)/Programs/python.o
 	@if test $(MACHDEP) = wince ; then \
 		: $(if $(WINCE_HASH),,$(eval WINCE_HASH = $(word 1,$(shell cat $(shell echo $^ | sed "s/ /\n/g" | grep -vP "^WinCE/(?:dll|exe|)hash\.o") | $(HASH_FUNC) - -z)))) ; \
 		if test ! "$(WINCE_HASH)" = ""; then \
-			date +%Y/%m/%d %H:%M:%s.%N > $(srcdir)/wince-hash.txt; \
+			date "+%Y/%m/%d %H:%M:%S.%N" > $(srcdir)/wince-hash.txt; \
 			echo $(WINCE_HASH) >> $(srcdir)/wince-hash.txt; \
 			echo Hash: $(WINCE_HASH); \
 		fi; \
