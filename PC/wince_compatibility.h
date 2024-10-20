@@ -615,8 +615,8 @@ WINCE_PyAPI_FUNC(BOOL) wince_SetEnvironmentVariable(wchar_t *, wchar_t *);
 
 #define _MAX_ENV 0x7fff
 
-wchar_t **wince_wenviron;
-char **wince_environ;
+extern wchar_t **wince_wenviron;
+extern char **wince_environ;
 
 char *wince_getenv(const char *);
 wchar_t *wince_wgetenv(const wchar_t *);

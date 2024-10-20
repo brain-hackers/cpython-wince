@@ -12,6 +12,9 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 wchar_t **wargv;
 int argc;
 
+wchar_t **wince_wenviron;
+char **wince_environ;
+
 HWND hConsoleWindow;
 
 HANDLE hTh;
