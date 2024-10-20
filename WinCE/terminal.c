@@ -1027,7 +1027,7 @@ wince_putenv(const char *envstr)
         }
 
         MultiByteToWideChar(CP_UTF8, 0, tmp, -1, tmpw, tmplen);
-        if (tmplen > 4 && !_wcsnicmp(tmpw, "PWD=", 4)) {
+        if (tmplen > 4 && !_wcsnicmp(tmpw, L"PWD=", 4)) {
             SetCurrentDirectoryW(tmpw + 4);
         }
         if (_env[i] == NULL) {
