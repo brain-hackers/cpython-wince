@@ -150,7 +150,8 @@ unsigned long getVersion();
 
 void *SecureZeroMemory(void *ptr, size_t cnt);
 
-double copysign(double x, double y);
+double wince_copysign(double x, double y);
+#define copysign wince_copysign
 
 // Modules/_io/winconsoleio.c
 #define C3_HIGHSURROGATE 0x0800
@@ -227,8 +228,6 @@ int wcscat_s(wchar_t *strDestination, size_t numberOfElements, const wchar_t *st
 #define memcpy_s(d, ds, s, c) (memcpy(d, s, c))
 
 int _heapmin(void);
-
-double copysign(double x, double y);
 
 #define _LK_UNLCK 0  /* Unlock */
 #define _LK_LOCK 1   /* Lock */

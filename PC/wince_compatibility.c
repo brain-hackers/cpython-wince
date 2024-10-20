@@ -2639,7 +2639,7 @@ PathCchSkipRoot(wchar_t *pszPath, wchar_t **ppszRootEnd)
 }
 
 double
-copysign(double x, double y)
+wince_copysign(double x, double y)
 {
     if (x >= 0 && y >= 0 || x < 0 && y < 0)
         return x;
