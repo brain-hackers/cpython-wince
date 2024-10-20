@@ -495,6 +495,7 @@ struct _stat {
     time_t st_mtime; /* Modified time */
     time_t st_ctime; /* Creation time */
 };
+#define _STAT_DEFINED
 
 int _fstat(int handle, struct _stat *buffer);
 int _stat(const char *path, struct _stat *buffer);
