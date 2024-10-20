@@ -12573,6 +12573,7 @@ static HINSTANCE (CALLBACK *Py_ShellExecuteW)(HWND, LPCWSTR, LPCWSTR, LPCWSTR,
 static int
 check_ShellExecute()
 {
+#ifndef MS_WINCE
     HINSTANCE hShell32;
 
     /* only recheck */
@@ -12591,6 +12592,12 @@ check_ShellExecute()
             has_ShellExecute = 0;
         }
         Py_END_ALLOW_THREADS
+#else
+    if (-1 == has_ShellExecute) {
+        // emulated at PC/wince_compatibility.c
+        *(FARPROC*)&Py_ShellExecuteW = ShellExecuteW;
+        has_ShellExecute = 1;
+#endif
     }
     return has_ShellExecute;
 }
