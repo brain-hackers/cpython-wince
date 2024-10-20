@@ -365,11 +365,12 @@ class CDLL(object):
                 try:
                     import nt
                 except ImportError:
-                    import ce as nt
-                mode = nt._LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
-                if '/' in name or '\\' in name:
-                    self._name = nt._getfullpathname(self._name)
-                    mode |= nt._LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+                    pass
+                else:
+                    mode = nt._LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+                    if '/' in name or '\\' in name:
+                        self._name = nt._getfullpathname(self._name)
+                        mode |= nt._LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
 
         class _FuncPtr(_CFuncPtr):
             _flags_ = flags
@@ -462,8 +463,10 @@ class LibraryLoader(object):
 cdll = LibraryLoader(CDLL)
 pydll = LibraryLoader(PyDLL)
 
-if _os.name in ("nt", "ce"):
+if _os.name == "nt":
     pythonapi = PyDLL("python dll", None, _sys.dllhandle)
+elif _os.name == "ce":
+    pythonapi = PyDLL("python%d%d.dll" % _sys.version_info[:2])
 elif _sys.platform == "cygwin":
     pythonapi = PyDLL("libpython%d.%d.dll" % _sys.version_info[:2])
 else:
@@ -474,7 +477,10 @@ if _os.name in ("nt", "ce"):
     windll = LibraryLoader(WinDLL)
     oledll = LibraryLoader(OleDLL)
 
-    GetLastError = windll.kernel32.GetLastError
+    if _os.name == "nt":
+        GetLastError = windll.kernel32.GetLastError
+    else:
+        GetLastError = windll.coredll.GetLastError
     from _ctypes import get_last_error, set_last_error
 
     def WinError(code=None, descr=None):
