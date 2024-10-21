@@ -2715,6 +2715,8 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
     int spaced = 1;
     int error = 0;
 
+    wchar_t exeName[MAX_PATH + 1];
+
     int argTmpSize = 64;
 
     int cmdlen = (int)wcslen(lpCmdLine);
@@ -2731,23 +2733,26 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         return NULL;
     }
 
-    wchar_t exeName[MAX_PATH + 1] = L"";
-    if (exeName == NULL) {
+    GetModuleFileName(NULL, exeName, MAX_PATH + 1);
+    argv[0] = (wchar_t *)calloc(wcslen(exeName)+1, sizeof(wchar_t));
+    if (argv[0] == NULL) {
         free(argv);
         free(argTmpOrg);
         return NULL;
     }
-    GetModuleFileName(NULL, exeName, MAX_PATH + 1);
-    argv[0] = exeName;
+    wcscpy(argv[0], exeName);
 
     while (i < cmdlen) {
         if (i < 0 && cmdlen == 0)
             break;
         i++;
-        if (spaced && *curChar != L' ' && *curChar != L'\t') {
+        if (spaced && *curChar != L' ' && *curChar != L'\t' && *curChar != L'\0') {
             spaced = 0;
             i2 = 0;
             argc++;
+        } else if (spaced) {
+            curChar++;
+            continue;
         }
         if (i2 >= argTmpSize) {
             argTmpSize += 16;
