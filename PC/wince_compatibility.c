@@ -493,6 +493,11 @@ GetFullPathNameA(const char *path, DWORD num_buf, char *buf, char **file_part)
     WCHAR wbuf[MAX_PATH + 1];
     DWORD n;
 
+    if (path == NULL || strlen(path) == 0) {
+        SetLastError(123); // ERROR_INVALID_NAME
+        return 0;
+    }
+
     wince_absolute_path_to_wide(path, wbuf, MAX_PATH);
     n = WideCharToMultiByte(CP_ACP, 0, wbuf, -1, buf, num_buf, NULL, NULL);
     if (file_part) {
@@ -508,6 +513,11 @@ GetFullPathNameA(const char *path, DWORD num_buf, char *buf, char **file_part)
 DWORD
 GetFullPathNameW(const wchar_t *path, DWORD num_buf, wchar_t *buf, wchar_t **file_part)
 {
+    if (path == NULL || wcslen(path) == 0) {
+        SetLastError(123); // ERROR_INVALID_NAME
+        return 0;
+    }
+
     wince_absolute_path_wide(path, buf, num_buf);
     if (file_part) {
         *file_part = wcsrchr(buf, '\\');
