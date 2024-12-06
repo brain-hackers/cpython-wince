@@ -38,7 +38,7 @@ def _find_executable(executable, path=None):
     paths = path.split(os.pathsep)
     base, ext = os.path.splitext(executable)
 
-    if (sys.platform == 'win32') and (ext != '.exe'):
+    if (sys.platform in ('win32', 'wince')) and (ext != '.exe'):
         executable = executable + '.exe'
 
     if not os.path.isfile(executable):

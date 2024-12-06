@@ -76,7 +76,7 @@ class ZoomHeight:
                     'the "zoomed" window state is unavailable.')
             top.update()
             maxwidth, maxheight, maxx, maxy = get_window_geometry(top)
-            if sys.platform == 'win32':
+            if sys.platform in ('win32', 'wince'):
                 # On Windows, the returned Y coordinate is the one before
                 # maximizing, so we use 0 which is correct unless a user puts
                 # their dock on the top of the screen (very rare).

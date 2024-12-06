@@ -124,7 +124,7 @@ class EnvBuilder:
         context.executable = executable
         context.python_dir = dirname
         context.python_exe = exename
-        if sys.platform == 'win32':
+        if sys.platform in ('win32', 'wince'):
             binname = 'Scripts'
             incpath = 'Include'
             libpath = os.path.join(env_dir, 'Lib', 'site-packages')
@@ -150,7 +150,7 @@ class EnvBuilder:
         # Assign and update the command to use when launching the newly created
         # environment, in case it isn't simply the executable script (e.g. bpo-45337)
         context.env_exec_cmd = context.env_exe
-        if sys.platform == 'win32':
+        if sys.platform in ('win32', 'wince'):
             # bpo-45337: Fix up env_exec_cmd to account for file system redirections.
             # Some redirects only apply to CreateFile and not CreateProcess
             real_env_exe = os.path.realpath(context.env_exe)

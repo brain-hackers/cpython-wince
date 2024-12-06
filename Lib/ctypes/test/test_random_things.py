@@ -9,22 +9,33 @@ def callback_func(arg):
     42 / arg
     raise ValueError(arg)
 
-@unittest.skipUnless(sys.platform == "win32", 'Windows-specific test')
+@unittest.skipUnless(sys.platform in ("win32", "wince"), 'Windows-specific test')
 class call_function_TestCase(unittest.TestCase):
     # _ctypes.call_function is deprecated and private, but used by
     # Gary Bishp's readline module.  If we have it, we must test it as well.
 
     def test(self):
         from _ctypes import call_function
-        windll.kernel32.LoadLibraryA.restype = c_void_p
-        windll.kernel32.GetProcAddress.argtypes = c_void_p, c_char_p
-        windll.kernel32.GetProcAddress.restype = c_void_p
+        if sys.platform == "win32":
+            windll.kernel32.LoadLibraryA.restype = c_void_p
+            windll.kernel32.GetProcAddress.argtypes = c_void_p, c_char_p
+            windll.kernel32.GetProcAddress.restype = c_void_p
 
-        hdll = windll.kernel32.LoadLibraryA(b"kernel32")
-        funcaddr = windll.kernel32.GetProcAddress(hdll, b"GetModuleHandleA")
+            hdll = windll.kernel32.LoadLibraryA(b"kernel32")
+            funcaddr = windll.kernel32.GetProcAddress(hdll, b"GetModuleHandleA")
 
-        self.assertEqual(call_function(funcaddr, (None,)),
-                             windll.kernel32.GetModuleHandleA(None))
+            self.assertEqual(call_function(funcaddr, (None,)),
+                                windll.kernel32.GetModuleHandleA(None))
+        else: # wince
+            windll.coredll.LoadLibrary.restype = c_void_p
+            windll.coredll.GetProcAddress.argtypes = c_void_p, c_char_p
+            windll.coredll.GetProcAddress.restype = c_void_p
+
+            hdll = windll.coredll.LoadLibrary("coredll")
+            funcaddr = windll.coredll.GetProcAddress(hdll, "GetModuleHandle")
+
+            self.assertEqual(call_function(funcaddr, (None,)),
+                                windll.coredll.GetModuleHandle(None))
 
 class CallbackTracbackTestCase(unittest.TestCase):
     # When an exception is raised in a ctypes callback function, the C

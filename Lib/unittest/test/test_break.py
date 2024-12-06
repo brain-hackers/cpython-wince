@@ -9,7 +9,7 @@ import unittest
 
 
 @unittest.skipUnless(hasattr(os, 'kill'), "Test requires os.kill")
-@unittest.skipIf(sys.platform =="win32", "Test cannot run on Windows")
+@unittest.skipIf(sys.platform in ("win32", "wince"), "Test cannot run on Windows")
 class TestBreak(unittest.TestCase):
     int_handler = None
 
@@ -261,17 +261,17 @@ class TestBreak(unittest.TestCase):
         self.assertNotEqual(signal.getsignal(signal.SIGINT), default_handler)
 
 @unittest.skipUnless(hasattr(os, 'kill'), "Test requires os.kill")
-@unittest.skipIf(sys.platform =="win32", "Test cannot run on Windows")
+@unittest.skipIf(sys.platform in ("win32", "wince"), "Test cannot run on Windows")
 class TestBreakDefaultIntHandler(TestBreak):
     int_handler = signal.default_int_handler
 
 @unittest.skipUnless(hasattr(os, 'kill'), "Test requires os.kill")
-@unittest.skipIf(sys.platform =="win32", "Test cannot run on Windows")
+@unittest.skipIf(sys.platform in ("win32", "wince"), "Test cannot run on Windows")
 class TestBreakSignalIgnored(TestBreak):
     int_handler = signal.SIG_IGN
 
 @unittest.skipUnless(hasattr(os, 'kill'), "Test requires os.kill")
-@unittest.skipIf(sys.platform =="win32", "Test cannot run on Windows")
+@unittest.skipIf(sys.platform in ("win32", "wince"), "Test cannot run on Windows")
 class TestBreakSignalDefault(TestBreak):
     int_handler = signal.SIG_DFL
 

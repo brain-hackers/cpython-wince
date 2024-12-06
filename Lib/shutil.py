@@ -1476,7 +1476,7 @@ def which(cmd, mode=os.F_OK | os.X_OK, path=None):
         path = os.fsdecode(path)
         path = path.split(os.pathsep)
 
-    if sys.platform == "win32":
+    if sys.platform in ("win32", "wince"):
         # The current directory takes precedence on Windows.
         curdir = os.curdir
         if use_bytes:

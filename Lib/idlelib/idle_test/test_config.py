@@ -402,6 +402,9 @@ class IdleConfTest(unittest.TestCase):
         sys.platform = 'win32'
         self.assertEqual(conf.default_keys(), 'IDLE Classic Windows')
 
+        sys.platform = 'wince'
+        self.assertEqual(conf.default_keys(), 'IDLE Classic Windows')
+
         sys.platform = 'darwin'
         self.assertEqual(conf.default_keys(), 'IDLE Classic OSX')
 

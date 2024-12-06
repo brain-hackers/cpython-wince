@@ -5,7 +5,7 @@ import sys as _sys
 try:
     import _crypt
 except ModuleNotFoundError:
-    if _sys.platform == 'win32':
+    if _sys.platform in ('win32', 'wince'):
         raise ImportError("The crypt module is not supported on Windows")
     else:
         raise ImportError("The required _crypt module was not built as part of CPython")
