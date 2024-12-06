@@ -11,8 +11,8 @@ export LD=$TOOL_PREFIX-ld
 export READELF=$TOOL_PREFIX-readelf
 export WINDRES=$TOOL_PREFIX-windres
 export LIBS="-lcoredll6 -lcoredll -lm -laygshell -lws2 -lcommctrl"
-export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./Modules/_ctypes/libffi_arm_wince -I./WinCE/zlib/include"
-export LDFLAGS="-fno-strict-aliasing -L./WinCE/zlib/lib"
+export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./Modules/_ctypes/libffi_arm_wince -IWinCE/zlib/include -IWinCE/bzip2/include"
+export LDFLAGS="-fno-strict-aliasing -LWinCE/zlib/lib -LWinCE/bzip2/lib"
 export CPPFLAGS="-fvisibility=hidden"
 export LIBFFI_INCLUDEDIR="Modules/_ctypes/libffi-arm-wince"
 export OPENSSL="./WinCE/openssl"
@@ -63,6 +63,16 @@ cd libffi
 ./autogen.sh
 ./ce_build.sh
 cp arm-unknown-mingw32ce/.libs/libffi-8.dll ../
+cd ..
+
+# download libraries
+cd WinCE
+
+# download bzip2
+wget https://github.com/RasPython3/bzip2-ce/releases/download/2024-12-06/bzip2.zip
+unzip bzip2.zip -d bzip2
+rm bzip2.zip
+
 cd ..
 
 touch make.log

@@ -7,4 +7,6 @@ if test -e Makefile; then
     make distclean;
 fi
 
+rm -rf WinCE/bzip2
+
 echo "Clean up finished."

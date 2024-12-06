@@ -29,4 +29,10 @@ if test -a wince_build/python310d.dll; then mv wince_build/python310.zip wince_b
 
 cp -r tk84.dll tcl84.dll celib.dll zlib1.dll tcl8.4.3 wince_build/
 
+cp WinCE/bzip2/lib/bz2.dll wince_build/
+for i in `find WinCE/bzip2 | grep COPYING`;
+do
+    echo cp $i `echo $i | sed "s/^.*\//wince_build\/libbz2-/"` | sh;
+done
+
 echo "Done."
