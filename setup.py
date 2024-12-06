@@ -1709,8 +1709,6 @@ class PyBuildExt(build_ext):
             self.missing.extend(['resource', 'termios'])
 
         if WINCE:
-            #self.add(Extension('_overlapped', ['overlapped.c'])) too many things to fix!!!
-            #self.add(Extension('_msi', ['PC/_msi.c']))
             self.add(Extension('winsound', ['PC/winsound.c']))
 
         # Platform-specific libraries
@@ -1958,7 +1956,8 @@ class PyBuildExt(build_ext):
         self.detect_compress_exts()
         self.detect_expat_elementtree()
         self.detect_multibytecodecs()
-        #self.detect_decimal()
+        if not WINCE:
+            self.detect_decimal()
         self.detect_ctypes()
         self.detect_multiprocessing()
         if not self.detect_tkinter():
