@@ -1739,10 +1739,7 @@ class PyBuildExt(build_ext):
         #
         # You can upgrade zlib to version 1.1.4 yourself by going to
         # http://www.gzip.org/zlib/
-        if not WINCE:
-            zlib_inc = find_file('zlib.h', [], self.inc_dirs)
-        else:
-            zlib_inc = find_file('zlib.h', [], self.inc_dirs + ['WinCE/zlib/include'])
+        zlib_inc = find_file('zlib.h', [], self.inc_dirs))
         have_zlib = False
         if zlib_inc is not None:
             zlib_h = zlib_inc[0] + '/zlib.h'
