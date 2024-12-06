@@ -8,5 +8,6 @@ if test -e Makefile; then
 fi
 
 rm -rf WinCE/bzip2
+rm -rf WinCE/lzma
 
 echo "Clean up finished."

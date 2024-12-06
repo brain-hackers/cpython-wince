@@ -35,4 +35,10 @@ do
     echo cp $i `echo $i | sed "s/^.*\//wince_build\/libbz2-/"` | sh;
 done
 
+cp WinCE/lzma/lib/liblzma-*.dll wince_build/
+for i in `find WinCE/lzma | grep COPYING`;
+do
+    echo cp $i `echo $i | sed "s/^.*\//wince_build\/liblzma-/"` | sh;
+done
+
 echo "Done."
