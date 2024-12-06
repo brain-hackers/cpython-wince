@@ -121,7 +121,7 @@ CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
 # build openssl
 cp python310.dll openssl/
 cd openssl
-./Configure no-idea no-mdc2 no-rc5 no-weak-ssl-ciphers no-async no-engine --prefix="\\" arm-mingw32ce-python
+./Configure no-idea no-mdc2 no-rc5 no-weak-ssl-ciphers no-async no-engine arm-mingw32ce-python
 make build_generated libcrypto-3.dll libssl-3.dll -j$(nproc)
 cp libcrypto-3.dll libssl-3.dll ../
 cd ..
