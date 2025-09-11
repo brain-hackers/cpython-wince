@@ -1112,8 +1112,11 @@ init_interp_main(PyThreadState *tstate)
     }
 
     if (is_main_interp) {
+#ifndef MS_WINCE
         if (_PySignal_Init(config->install_signal_handlers) < 0) {
+            return _PyStatus_ERR("can't initialize signals");
         }
+#endif
 
         if (_PyTraceMalloc_Init(config->tracemalloc) < 0) {
             return _PyStatus_ERR("can't initialize tracemalloc");
@@ -2119,8 +2122,7 @@ is_valid_fd(int fd)
    Only use dup() on platforms where dup() is enough to detect invalid FD in
    corner cases: on Linux and Windows (bpo-32849). */
 #if defined(__linux__) || defined(MS_WINDOWS)
-    if (fd < 0)
-    {
+    if (fd < 0) {
         return 0;
     }
     int fd2;
@@ -2502,7 +2504,7 @@ fatal_output_debug(const char *msg)
     size_t buflen = Py_ARRAY_LENGTH(buffer) - 1;
     size_t msglen;
 
-    OutputDebugStringW(L"Fatal Python Error:");
+    OutputDebugStringW(L"Fatal Python error: ");
 
     msglen = strlen(msg);
     while (msglen) {
