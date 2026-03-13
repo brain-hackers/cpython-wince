@@ -2790,9 +2790,8 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
                 argTmp = tmp + (argTmp - argTmpOrg);
                 argTmpOrg = tmp;
             }
-            for (int index = 0; index < backslash; index += 2) {
+            for (; backslash > 1; backslash -= 2) {
                 *argTmp = L'\\';
-                backslash -= 2;
                 argTmp++;
                 i2++;
             }
