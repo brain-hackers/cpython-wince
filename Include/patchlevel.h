@@ -22,8 +22,11 @@
 #define PY_RELEASE_LEVEL        PY_RELEASE_LEVEL_FINAL
 #define PY_RELEASE_SERIAL       0
 
+/* Windows CE port release version */
+#define PY_CE_VERSION           1
+
 /* Version as a string */
-#define PY_VERSION              "3.10.10"
+#define PY_VERSION              "3.10.10+ce1"
 /*--end constants--*/
 
 /* Version as a single 4-byte hex number, e.g. 0x010502B2 == 1.5.2b2.
