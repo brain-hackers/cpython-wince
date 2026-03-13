@@ -4722,7 +4722,7 @@ internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is
 #ifndef MS_WINCE
     result = MoveFileExW(src->wide, dst->wide, flags);
 #else
-    /* FIXME-WINCE: replasing is not considered well. */
+    /* FIXME-WINCE: replacing is not considered well. */
     result = MoveFile(src->wide, dst->wide);
 #endif
     Py_END_ALLOW_THREADS
@@ -4979,7 +4979,7 @@ BOOL WINAPI Py_DeleteFileW(LPCWSTR lpFileName)
                 is_link = find_data.dwReserved0 == IO_REPARSE_TAG_SYMLINK ||
                           find_data.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT;
 #else
-		is_link = 0;
+                is_link = 0;
 #endif
                 FindClose(find_data_handle);
             }
@@ -14705,7 +14705,7 @@ os__remove_dll_directory_impl(PyObject *module, PyObject *cookie)
     }
 #else
     PyErr_SetString(PyExc_TypeError,
-	"This feature is not supported on Windows CE.");
+	    "This feature is not supported on Windows CE.");
     return NULL;
 #endif
 
