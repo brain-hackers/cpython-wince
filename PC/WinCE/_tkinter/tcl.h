@@ -125,6 +125,9 @@ extern struct _Tcl_Dynload {
 #define Tcl_Alloc (*_Tcl_Dynload._Tcl_Alloc)
 char * (*_Tcl_Alloc)(unsigned int size);
 
+#define Tcl_AttemptAlloc (*_Tcl_Dynload._Tcl_AttemptAlloc)
+char * (*_Tcl_AttemptAlloc)(unsigned int size);
+
 #define Tcl_Free (*_Tcl_Dynload._Tcl_Free)
 void (*_Tcl_Free)(char * ptr);
 
@@ -167,6 +170,9 @@ void (*_Tcl_ThreadQueueEvent) (Tcl_ThreadId threadId, Tcl_Event* evPtr, Tcl_Queu
 #define Tcl_NewStringObj (*_Tcl_Dynload._Tcl_NewStringObj)
 Tcl_Obj * (*_Tcl_NewStringObj) (const char * bytes, int length);
 
+#define Tcl_NewByteArrayObj (*_Tcl_Dynload._Tcl_NewByteArrayObj)
+Tcl_Obj * (*_Tcl_NewByteArrayObj) (const unsigned char * bytes, int length);
+
 #define Tcl_NewLongObj (*_Tcl_Dynload._Tcl_NewLongObj)
 Tcl_Obj * (*_Tcl_NewLongObj) (long longValue);
 
@@ -188,8 +194,14 @@ Tcl_Obj * (*_Tcl_NewWideIntObj) (Tcl_WideInt * unicode);
 #define Tcl_GetObjResult (*_Tcl_Dynload._Tcl_GetObjResult)
 Tcl_Obj * (*_Tcl_GetObjResult) (Tcl_Interp * interp);
 
+#define Tcl_SetObjResult (*_Tcl_Dynload._Tcl_SetObjResult)
+Tcl_Obj * (*_Tcl_SetObjResult) (Tcl_Interp * interp, Tcl_Obj * objPtr);
+
 #define Tcl_GetUnicode (*_Tcl_Dynload._Tcl_GetUnicode)
 Tcl_UniChar * (*_Tcl_GetUnicode) (Tcl_Obj * objPtr);
+
+#define Tcl_GetUnicodeFromObj (*_Tcl_Dynload._Tcl_GetUnicodeFromObj)
+Tcl_UniChar * (*_Tcl_GetUnicodeFromObj) (Tcl_Obj * objPtr, int * lengthPtr);
 
 #define Tcl_GetCharLength (*_Tcl_Dynload._Tcl_GetCharLength)
 int (*_Tcl_GetCharLength) (Tcl_Obj * objPtr);
@@ -200,11 +212,17 @@ int (*_Tcl_ListObjIndex) (Tcl_Interp * interp, Tcl_Obj * listPtr, int index, Tcl
 #define Tcl_ListObjLength (*_Tcl_Dynload._Tcl_ListObjLength)
 int (*_Tcl_ListObjLength) (Tcl_Interp * interp, Tcl_Obj * listPtr, int * intPtr);
 
+#define Tcl_ListObjGetElements (*_Tcl_Dynload._Tcl_ListObjGetElements)
+int (*_Tcl_ListObjGetElements) (Tcl_Interp * interp, Tcl_Obj * listPtr, int * objcPtr, Tcl_Obj *** objvPtr);
+
 #define Tcl_GetByteArrayFromObj (*_Tcl_Dynload._Tcl_GetByteArrayFromObj)
 unsigned char * (*_Tcl_GetByteArrayFromObj) (Tcl_Obj * objPtr, int * lengthPtr);
 
 #define Tcl_ConditionNotify (*_Tcl_Dynload._Tcl_ConditionNotify)
 void (*_Tcl_ConditionNotify) (Tcl_Condition * condPtr);
+
+#define Tcl_ConditionFinalize (*_Tcl_Dynload._Tcl_ConditionFinalize)
+void (*_Tcl_ConditionFinalize) (Tcl_Condition * condPtr);
 
 #define Tcl_GlobalEval (*_Tcl_Dynload._Tcl_GlobalEval)
 int (*_Tcl_GlobalEval) (Tcl_Interp * interp, char * command);
@@ -239,8 +257,20 @@ int (*_Tcl_GetInt) (Tcl_Interp * interp, char * str, int * intPtr);
 #define Tcl_GetDouble (*_Tcl_Dynload._Tcl_GetDouble)
 int (*_Tcl_GetDouble) (Tcl_Interp * interp, char * str, double * doublePtr);
 
+#define Tcl_GetDoubleFromObj (*_Tcl_Dynload._Tcl_GetDoubleFromObj)
+int (*_Tcl_GetDoubleFromObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, double * doublePtr);
+
 #define Tcl_GetBoolean (*_Tcl_Dynload._Tcl_GetBoolean)
 int (*_Tcl_GetBoolean) (Tcl_Interp * interp, char * str, int * boolPtr);
+
+#define Tcl_GetBooleanFromObj (*_Tcl_Dynload._Tcl_GetBooleanFromObj)
+int (*_Tcl_GetBooleanFromObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, int * boolPtr);
+
+#define Tcl_GetLongFromObj (*_Tcl_Dynload._Tcl_GetLongFromObj)
+int (*_Tcl_GetLongFromObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, long * longPtr);
+
+#define Tcl_GetWideIntFromObj (*_Tcl_Dynload._Tcl_GetWideIntFromObj)
+int (*_Tcl_GetWideIntFromObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, Tcl_WideInt * widePtr);
 
 #define Tcl_ExprString (*_Tcl_Dynload._Tcl_ExprString)
 int (*_Tcl_ExprString) (Tcl_Interp * interp, char * string);
@@ -259,6 +289,9 @@ Tcl_Command (*_Tcl_CreateCommand) (Tcl_Interp * interp, char * cmdName, Tcl_CmdP
 
 #define Tcl_DeleteCommand (*_Tcl_Dynload._Tcl_DeleteCommand)
 int (*_Tcl_DeleteCommand) (Tcl_Interp * interp, char * cmdName);
+
+#define Tcl_CreateObjCommand (*_Tcl_Dynload._Tcl_CreateObjCommand)
+Tcl_Command (*_Tcl_CreateObjCommand) (Tcl_Interp * interp, char * cmdName, Tcl_CmdProc * proc, ClientData clientData, Tcl_CmdDeleteProc * deleteProc);
 
 #define Tcl_DeleteTimerHandler (*_Tcl_Dynload._Tcl_DeleteTimerHandler)
 void (*_Tcl_DeleteTimerHandler) (Tcl_TimerToken token);
@@ -289,6 +322,9 @@ Tcl_Interp * (*_Tcl_CreateInterp) (void);
 
 #define	Tcl_SetResult (*_Tcl_Dynload._Tcl_SetResult)
 void (*_Tcl_SetResult) (Tcl_Interp * interp, char * str, Tcl_FreeProc * freeProc);
+
+#define	Tcl_ResetResult (*_Tcl_Dynload._Tcl_ResetResult)
+void (*_Tcl_ResetResult) (Tcl_Interp * interp);
 
 #define	Tcl_EvalObjv (*_Tcl_Dynload._Tcl_EvalObjv)
 int (*_Tcl_EvalObjv) (Tcl_Interp * interp, int objc, Tcl_Obj *const objv[], int flags);

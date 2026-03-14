@@ -53,7 +53,7 @@ class BytesTest(unittest.TestCase):
         self.assertEqual(x.a, "abc")
         self.assertEqual(type(x.a), str)
 
-    @unittest.skipUnless(sys.platform == "win32", 'Windows-specific test')
+    @unittest.skipUnless(sys.platform in ("win32", "wince"), 'Windows-specific test')
     def test_BSTR(self):
         from _ctypes import _SimpleCData
         class BSTR(_SimpleCData):

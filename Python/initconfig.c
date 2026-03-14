@@ -102,7 +102,15 @@ static const char usage_3[] = "\
 \n\
 --check-hash-based-pycs always|default|never:\n\
     control how Python invalidates hash-based .pyc files\n\
-";
+"
+#ifdef MS_WINCE
+"--env-path path:\n\
+    add path to file in which environment variables are defined (Windows CE)\n\
+--env-set KEY=VALUE:\n\
+    set the environment variable named KEY to VALUE (Windows CE)\n\
+"
+#endif
+"";
 static const char usage_4[] = "\
 file   : program read from script file\n\
 -      : program read from stdin (default; interactive mode if a tty)\n\
@@ -139,7 +147,12 @@ static const char usage_6[] =
 "   debugger. It can be set to the callable of your debugger of choice.\n"
 "PYTHONDEVMODE: enable the development mode.\n"
 "PYTHONPYCACHEPREFIX: root directory for bytecode cache (pyc) files.\n"
-"PYTHONWARNDEFAULTENCODING: enable opt-in EncodingWarning for 'encoding=None'.\n";
+"PYTHONWARNDEFAULTENCODING: enable opt-in EncodingWarning for 'encoding=None'.\n"
+#ifdef MS_WINCE
+"PYTHONASSOCIATEREG: if set to 1, associate '.py' with registry.\n"
+"   This works even if -E is given (Windows CE)\n"
+#endif
+"";
 
 #if defined(MS_WINDOWS)
 #  define PYTHONHOMEHELP "<prefix>\\python{major}{minor}"
@@ -2363,7 +2376,12 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
                 return _PyStatus_EXIT(2);
             }
             break;
-
+#ifdef MS_WINCE
+        case 1:
+        case 2:
+            /* Long options handled in _PyPreCmdline_Read() */
+            break;
+#endif
         case 'b':
             config->bytes_warning++;
             break;
@@ -3115,28 +3133,6 @@ _Py_DumpPathConfig(PyThreadState *tstate)
         }
         PySys_WriteStderr("  ]\n");
     }
-    PyObject *sys_meta_path = PySys_GetObject("meta_path");  /* borrowed reference */
-    if (sys_meta_path != NULL && PyList_Check(sys_meta_path)) {
-        PySys_WriteStderr("  sys.meta_path = [\n");
-        Py_ssize_t len = PyList_GET_SIZE(sys_meta_path);
-        for (Py_ssize_t i=0; i < len; i++) {
-            PyObject *meta_path = PyList_GET_ITEM(sys_meta_path, i);
-            PySys_FormatStderr("    %A,\n", meta_path);
-        }
-        PySys_WriteStderr("  ]\n");
-    }
-    PyObject *sys_path_hooks = PySys_GetObject("path_hooks");  /* borrowed reference */
-    if (sys_path_hooks != NULL && PyList_Check(sys_path_hooks)) {
-        PySys_WriteStderr("  sys.path_hooks = [\n");
-        Py_ssize_t len = PyList_GET_SIZE(sys_path_hooks);
-        for (Py_ssize_t i=0; i < len; i++) {
-            PyObject *path_hooks = PyList_GET_ITEM(sys_path_hooks, i);
-            PySys_FormatStderr("    %A,\n", path_hooks);
-        }
-        PySys_WriteStderr("  ]\n");
-    }
-
-
 
     _PyErr_Restore(tstate, exc_type, exc_value, exc_tb);
 }

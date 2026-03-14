@@ -9,9 +9,14 @@ wmain(int argc, wchar_t **argv)
     return Py_Main(argc, argv);
 }
 #elif defined(MS_WINCE)
+
+extern char* WinCEShell_ExeHash;
+
 int
 WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, wchar_t *lpsCmdLine, int nCmdShow)
 {
+    if (!WinCEShell_CheckHash(WinCEShell_ExeHash))
+        return -1;
     return WinCEShell_WinMain(hCurInst, hPrevInst, lpsCmdLine, nCmdShow);
 }
 #else

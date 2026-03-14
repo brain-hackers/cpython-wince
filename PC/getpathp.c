@@ -530,7 +530,11 @@ get_program_full_path(_PyPathConfig *pathconfig)
         wcscpy_s(program_full_path, MAXPATHLEN+1, pyvenv_launcher);
         /* bpo-35873: Clear the environment variable to avoid it being
         * inherited by child processes. */
+#ifndef MS_WINCE
         _wputenv_s(L"__PYVENV_LAUNCHER__", L"");
+#else
+        _wputenv(L"__PYVENV_LAUNCHER__=");
+#endif
     }
 
     if (pathconfig->program_full_path == NULL) {

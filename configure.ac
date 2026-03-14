@@ -1035,14 +1035,22 @@ AC_SUBST(PY3LIBRARY)
 AC_SUBST(LDLIBRARYDIR)
 AC_SUBST(INSTSONAME)
 AC_SUBST(RUNSHARED)
-AC_SUBST(LDVERSION)
 LDLIBRARY="$LIBRARY"
 BLDLIBRARY='$(LDLIBRARY)'
 INSTSONAME='$(LDLIBRARY)'
 DLLLIBRARY=''
 LDLIBRARYDIR=''
 RUNSHARED=''
-LDVERSION="$VERSION"
+
+case $ac_sys_system in
+  WinCE*)
+    LDVERSION="\$(subst .,,$VERSION)"
+    ;;
+  *)
+    LDVERSION="$VERSION"
+    ;;
+esac
+AC_SUBST(LDVERSION)
 
 # WINDRES is needed to check if PC/python_exe.rc is usable or not.
 AC_CHECK_TOOLS([WINDRES], [windres], [:])
@@ -1054,6 +1062,18 @@ case $ac_sys_system in
     esac
 esac
 AC_SUBST(WINDRES)
+
+# On WinCE, dlls with a same name cannot be loaded separately at the same time.
+# Including a hash in both exe and dll can prevent loading wrong dll.
+AC_CHECK_TOOLS([HASH_FUNC], [md5sum], [:])
+case $ac_sys_system in
+  WinCE*)
+    case "$HASH_FUNC" in
+      :)
+        HASH_FUNC=""
+    esac
+esac
+AC_SUBST(HASH_FUNC)
 
 # LINKCC is the command that links the python executable -- default is $(CC).
 # If CXX is set, and if it is needed to link a main function that was
@@ -1169,8 +1189,8 @@ if test $enable_shared = "yes"; then
           DLLLIBRARY='libpython$(LDVERSION).dll'
           ;;
     WinCE*)
-	     LDLIBRARY='libpython$(LDVERSION).dll.a'
-	     DLLLIBRARY='libpython$(LDVERSION).dll'
+	     LDLIBRARY='python$(LDVERSION).dll.a'
+	     DLLLIBRARY='python$(LDVERSION).dll'
 	     if test ! $WINDRES = ""; then
 	         BLDLIBRARY='$(LDLIBRARY) PC/python_exe.o'
 	     fi
@@ -4895,7 +4915,14 @@ AC_SUBST(EXT_SUFFIX)
 EXT_SUFFIX=.${SOABI}${SHLIB_SUFFIX}
 
 AC_MSG_CHECKING(LDVERSION)
-LDVERSION='$(VERSION)$(ABIFLAGS)'
+case $ac_sys_system in
+  WinCE*)
+    LDVERSION='$(subst .,,$(VERSION))$(ABIFLAGS)'
+    ;;
+  *)
+    LDVERSION='$(VERSION)$(ABIFLAGS)'
+    ;;
+esac
 AC_MSG_RESULT($LDVERSION)
 
 # On Android and Cygwin the shared libraries must be linked with libpython.

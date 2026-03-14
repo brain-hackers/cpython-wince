@@ -2,7 +2,6 @@
 
 rm -rf wince_build
 mkdir wince_build
-mkdir wince_build/Lib
 
 BUILD_MACHINE=`$SHELL ./config.guess`
 
@@ -10,24 +9,36 @@ if test ! -d build/bin; then echo "not built yet!"; exit 1; fi
 
 cp build/bin/python3.10.exe wince_build/
 cp build/bin/*.dll wince_build/
-cp build/lib.*/_sysconfigdata*.py wince_build/Lib/
+cp libcrypto-3.dll wince_build/
+cp libssl-3.dll wince_build/
+cp libffi-8.dll wince_build/
+cp WinCE/sqlite/lib/libsqlite3.dll wince_build/
+cp WinCE/init.py wince_build/
 
-mv build/lib/python3.10/os.py wince_build/Lib/
 python3.10 ce_mkpyc.py
 cd build/lib/python3.10
 zip -0 -@ python310.zip < ../../../zip.list
-cp ../../../wince_build/Lib/os.py ./
 
 mv python310.zip ../../../wince_build/
 
 cd ../../../
 
-ls build/lib.wince-arm-3.10/*.so -d | sed 's/\.cpython.*//' | sed 's/^.*\///' | awk '{printf "cp build/lib.wince-arm-3.10/"$1".cpython-310-*.so  wince_build/"$1".pyd\n"}' | bash
+ls build/lib/python3.10/lib-dynload/*.so -d | sed 's/\.cpython.*//' | sed 's/^.*\///' | awk '{printf "cp build/lib/python3.10/lib-dynload/"$1".*.so  wince_build/"$1".cp310-wince_arm.pyd\n"}' | bash
 
-echo -ne "Lib\npython310.zip\n.\nimport site" > wince_build/libpython3.10._pth
+if test -a wince_build/python310d.dll; then mv wince_build/python310.zip wince_build/python310d.zip; fi
 
-if test -a wince_build/libpython3.10d.dll; then mv wince_build/libpython3.10._pth wince_build/libpython3.10d._pth; fi
+cp -r tk84.dll tcl84.dll celib.dll zlib1.dll tcl8.4.3 wince_build/
 
-cp -r tk84.dll tcl84.dll celib.dll tcl8.4.3 wince_build/
+cp WinCE/bzip2/lib/bz2.dll wince_build/
+for i in `find WinCE/bzip2 | grep COPYING`;
+do
+    echo cp $i `echo $i | sed "s/^.*\//wince_build\/libbz2-/"` | sh;
+done
+
+cp WinCE/lzma/lib/liblzma-*.dll wince_build/
+for i in `find WinCE/lzma | grep COPYING`;
+do
+    echo cp $i `echo $i | sed "s/^.*\//wince_build\/liblzma-/"` | sh;
+done
 
 echo "Done."

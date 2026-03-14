@@ -149,4 +149,4 @@
 
 #define alloca _alloca
 
-#define abort() exit(999)
+

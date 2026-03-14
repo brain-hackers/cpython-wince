@@ -284,6 +284,9 @@ COVERAGE_INFO=	$(abs_builddir)/coverage.info
 COVERAGE_REPORT=$(abs_builddir)/lcov-report
 COVERAGE_REPORT_OPTIONS=--no-branch-coverage --title "CPython lcov report"
 
+# WinCE hash
+HASH_FUNC=	@HASH_FUNC@
+WINCE_HASH=	
 
 # === Definitions added by makesetup ===
 
@@ -464,27 +467,13 @@ WINCE_OBJS=	\
 		PC/msvcrtmodule.o \
 		PC/dl_nt.o
 
-ZLIB_OBJS= \
-		   Modules/zlibmodule.o \
-		   $(ZLIBDIR)/adler32.o \
-		   $(ZLIBDIR)/compress.o \
-		   $(ZLIBDIR)/crc32.o \
-		   $(ZLIBDIR)/deflate.o \
-		   $(ZLIBDIR)/infback.o \
-		   $(ZLIBDIR)/inffast.o \
-		   $(ZLIBDIR)/inflate.o \
-		   $(ZLIBDIR)/inftrees.o \
-		   $(ZLIBDIR)/trees.o \
-		   $(ZLIBDIR)/uncompr.o \
-		   $(ZLIBDIR)/zutil.o
-
 ##########################################################################
 # objects that get linked into the Python library
 ifeq ($(MACHDEP),wince)
 	LIBRARY_OBJS_OMIT_FROZEN=	\
 		Modules/getbuildinfo.o \
+		WinCE/dllhash.o \
 		$(WINCE_OBJS) \
-		$(ZLIB_OBJS) \
 		$(PARSER_OBJS) \
 		$(OBJECT_OBJS) \
 		$(PYTHON_OBJS) \
@@ -523,6 +512,18 @@ DTRACE_DEPS = \
 all:		@DEF_MAKE_ALL_RULE@
 build_all:	check-clean-src $(BUILDPYTHON) oldsharedmods sharedmods gdbhooks \
 		python-config
+
+# Generate hash for WinCE.
+WinCE/dllhash.o WinCE/exehash.o: $(LIBRARY_OBJS) $(srcdir)/Programs/python.o
+	@if test $(MACHDEP) = wince ; then \
+		: $(if $(WINCE_HASH),,$(eval WINCE_HASH = $(word 1,$(shell cat $(shell echo $^ | sed "s/ /\n/g" | grep -vP "^WinCE/(?:dll|exe|)hash\.o") | $(HASH_FUNC) - -z)))) ; \
+		if test ! "$(WINCE_HASH)" = ""; then \
+			date "+%Y/%m/%d %H:%M:%S.%N" > $(srcdir)/wince-hash.txt; \
+			echo $(WINCE_HASH) >> $(srcdir)/wince-hash.txt; \
+			echo Hash: $(WINCE_HASH); \
+		fi; \
+		$(CC) -c $(PY_CORE_CFLAGS) -DWINCE_HASH=\"$(WINCE_HASH)\" -o $@ $(basename $@).c ; \
+	fi
 
 # Check that the source is clean when building out of source.
 check-clean-src:
@@ -635,8 +636,10 @@ clinic: check-clean-src $(srcdir)/Modules/_blake2/blake2s_impl.c
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/clinic/clinic.py --make --srcdir $(srcdir)
 
 # Build the interpreter
-$(BUILDPYTHON):	Programs/python.o $(LIBRARY_DEPS)
-	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(BLDLIBRARY) $(LIBS) $(MODLIBS) $(SYSLIBS)
+$(BUILDPYTHON):	Programs/python.o $(LIBRARY_DEPS) WinCE/exehash.o
+	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o \
+		$(if $(shell echo -n $(MACHDEP) | sed s/^wince$//),,WinCE/exehash.o) \
+		$(BLDLIBRARY) $(LIBS) $(MODLIBS) $(SYSLIBS)
 
 platform: $(BUILDPYTHON) pybuilddir.txt
 	$(RUNSHARED) $(PYTHON_FOR_BUILD) -c 'import sys ; from sysconfig import get_platform ; print("%s-%d.%d" % (get_platform(), *sys.version_info[:2]))' >platform
@@ -689,7 +692,7 @@ $(LIBRARY): $(LIBRARY_OBJS)
 	-rm -f $@
 	$(AR) $(ARFLAGS) $@ $(LIBRARY_OBJS)
 
-libpython$(LDVERSION).dll: $(LIBRARY_OBJS) $(DTRACE_OBJS)
+python$(LDVERSION).dll: $(LIBRARY_OBJS) $(DTRACE_OBJS)
 	if test $(INSTSONAME) != $(LDLIBRARY); then \
 		$(BLDSHARED) -Wl,-h$(INSTSONAME) -o $(INSTSONAME) $(LIBRARY_OBJS) $(MODLIBS) $(SHLIBS) $(LIBC) $(LIBM); \
 		$(LN) -f $(INSTSONAME) $@; \
@@ -697,7 +700,7 @@ libpython$(LDVERSION).dll: $(LIBRARY_OBJS) $(DTRACE_OBJS)
 		$(BLDSHARED) -o $@ $(LIBRARY_OBJS) $(MODLIBS) $(SHLIBS) $(LIBC) $(LIBM); \
 	fi
 
-libpython3.dll:	libpython$(LDVERSION).dll
+python3.dll: python$(LDVERSION).dll
 	$(BLDSHARED) $(NO_AS_NEEDED) -o $@ -Wl,-h$@ $^
 
 libpython$(LDVERSION).dylib: $(LIBRARY_OBJS)
@@ -746,7 +749,7 @@ $(PYTHONFRAMEWORKDIR)/Versions/$(VERSION)/$(PYTHONFRAMEWORK): \
 
 # This rule builds the Cygwin Python DLL and import library if configured
 # for a shared core library; otherwise, this rule is a noop.
-$(DLLLIBRARY) libpython$(LDVERSION).dll.a: $(LIBRARY_OBJS)
+$(DLLLIBRARY) libpython$(LDVERSION).dll.a python$(LDVERSION).dll.a: $(LIBRARY_OBJS)
 	if test -n "$(DLLLIBRARY)"; then \
 		$(LDSHARED) -Wl,--out-implib=$@ -o $(DLLLIBRARY) $^ \
 			$(LIBS) $(MODLIBS) $(SYSLIBS); \
@@ -898,7 +901,7 @@ $(IO_OBJS): $(IO_H)
 
 PC/python_exe.o: $(srcdir)/PC/python_exe.rc $(srcdir)/PCbuild/field3.py $(srcdir)/PC/python_ver_rc.h
 	(echo "/*" && $(PYTHON_FOR_BUILD) $(srcdir)/PCbuild/field3.py && cat $(srcdir)/PC/python_exe.rc) \
-		| $(WINDRES) --input-format=rc -I$(srcdir)/PC -I$(srcdir)/Include -o $@
+		| $(WINDRES) --input-format=rc -I$(srcdir)/PC -I$(srcdir)/Include -DMS_WINCE -o $@
 
 .PHONY: regen-pegen-metaparser
 regen-pegen-metaparser:
@@ -1756,7 +1759,7 @@ inclinstall:
 		echo $(INSTALL_DATA) $$i $(INCLUDEPY)/internal; \
 		$(INSTALL_DATA) $$i $(DESTDIR)$(INCLUDEPY)/internal; \
 	done
-	@if $(MACHDEP) == "wince"; then \
+	@if test $(MACHDEP) = wince; then \
 		$(INSTALL_DATA) PC/pyconfig.h $(DESTDIR)$(CONFINCLUDEPY)/pyconfig.h; \
 	else	$(INSTALL_DATA) pyconfig.h $(DESTDIR)$(CONFINCLUDEPY)/pyconfig.h; \
 	fi
@@ -1977,7 +1980,7 @@ docclean:
 # like the 'clean' target but retain the profile guided optimization (PGO)
 # data.  The PGO data is only valid if source code remains unchanged.
 clean-retain-profile: pycremoval
-	find . -name '*.[oa]' -exec rm -f {} ';'
+	find . -name '*.[oa]' -not -path './WinCE/*/lib/*' -not -path './WinCE/*/include/*' -exec rm -f {} ';'
 	find . -name '*.s[ol]' -exec rm -f {} ';'
 	find . -name '*.dll.[0-9]*.[0-9]*' -exec rm -f {} ';'
 	find . -name '*.lst' -exec rm -f {} ';'

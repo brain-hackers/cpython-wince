@@ -14,7 +14,7 @@ from idlelib.util import py_extensions
 
 py_extensions = ' '.join("*"+ext for ext in py_extensions)
 encoding = 'utf-8'
-errors = 'surrogatepass' if sys.platform == 'win32' else 'surrogateescape'
+errors = 'surrogatepass' if sys.platform in ('win32', 'wince') else 'surrogateescape'
 
 
 class IOBinding:

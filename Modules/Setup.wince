@@ -1,2 +1,4 @@
 ce -DPy_BUILD_CORE_BUILTIN -I$(srcdir)/Include/internal posixmodule.c # posix system calls
 cmath cmathmodule.c _math.c -DPy_BUILD_CORE_MODULE # -lm # complex math library functions
+
+_opcode _opcode.c -DPy_BUILD_CORE_BUILTIN # builtin on Windows, not on Linux

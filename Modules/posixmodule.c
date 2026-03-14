@@ -1607,7 +1607,7 @@ win32_get_reparse_tag(HANDLE reparse_point_handle, ULONG *reparse_tag)
 ** man environ(7).
 */
 #include <crt_externs.h>
-#elif !defined(_MSC_VER) && !defined(MS_WINCE) && (!defined(__WATCOMC__) || defined(__QNX__) || defined(__VXWORKS__))
+#elif !defined(_MSC_VER) && (!defined(__WATCOMC__) || defined(__QNX__) || defined(__VXWORKS__))
 extern char **environ;
 #endif /* !_MSC_VER */
 
@@ -1624,7 +1624,7 @@ convertenviron(void)
     d = PyDict_New();
     if (d == NULL)
         return NULL;
-#if defined(MS_WINDOWS) && !defined(MS_WINCE)
+#ifdef MS_WINDOWS
     /* _wenviron must be initialized in this way if the program is started
        through main() instead of wmain(). */
     _wgetenv(L"");
@@ -4722,7 +4722,7 @@ internal_rename(path_t *src, path_t *dst, int src_dir_fd, int dst_dir_fd, int is
 #ifndef MS_WINCE
     result = MoveFileExW(src->wide, dst->wide, flags);
 #else
-    /* FIXME-WINCE: replasing is not considered well. */
+    /* FIXME-WINCE: replacing is not considered well. */
     result = MoveFile(src->wide, dst->wide);
 #endif
     Py_END_ALLOW_THREADS
@@ -4979,7 +4979,7 @@ BOOL WINAPI Py_DeleteFileW(LPCWSTR lpFileName)
                 is_link = find_data.dwReserved0 == IO_REPARSE_TAG_SYMLINK ||
                           find_data.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT;
 #else
-		is_link = 0;
+                is_link = 0;
 #endif
                 FindClose(find_data_handle);
             }
@@ -10992,7 +10992,6 @@ win32_putenv(PyObject *name, PyObject *value)
     if (env == NULL) {
         return NULL;
     }
-#ifndef MS_WINCE
     if (size > _MAX_ENV) {
         PyErr_Format(PyExc_ValueError,
                      "the environment variable is longer than %u characters",
@@ -11014,7 +11013,6 @@ win32_putenv(PyObject *name, PyObject *value)
         posix_error();
         return NULL;
     }
-#endif /* !MS_WINCE */
 
     Py_RETURN_NONE;
 }
@@ -12575,6 +12573,7 @@ static HINSTANCE (CALLBACK *Py_ShellExecuteW)(HWND, LPCWSTR, LPCWSTR, LPCWSTR,
 static int
 check_ShellExecute()
 {
+#ifndef MS_WINCE
     HINSTANCE hShell32;
 
     /* only recheck */
@@ -12593,6 +12592,12 @@ check_ShellExecute()
             has_ShellExecute = 0;
         }
         Py_END_ALLOW_THREADS
+#else
+    if (-1 == has_ShellExecute) {
+        // emulated at PC/wince_compatibility.c
+        *(FARPROC*)&Py_ShellExecuteW = ShellExecuteW;
+        has_ShellExecute = 1;
+#endif
     }
     return has_ShellExecute;
 }
@@ -14700,7 +14705,7 @@ os__remove_dll_directory_impl(PyObject *module, PyObject *cookie)
     }
 #else
     PyErr_SetString(PyExc_TypeError,
-	"This feature is not supported on Windows CE.");
+	    "This feature is not supported on Windows CE.");
     return NULL;
 #endif
 

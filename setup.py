@@ -27,9 +27,9 @@ with open(os.environ["_PYTHON_PROJECT_BASE"]+"/config.log", mode="r") as f:
 
 tool_prefix = os.environ.get("TOOL_PREFIX", "/usr/bin/arm-mingw32ce")
 os.environ.update({
-        "CC": f"{tool_prefix}-gcc " + ("libpython3.10.dll" if not pydebug else "libpython3.10d.dll"),
-        "LDSHARED": f"{tool_prefix}-gcc -shared "+ ("libpython3.10.dll" if not pydebug else "libpython3.10d.dll") + " --enable-auto-import",
-        "OPT": (os.environ["OPT"] + " " if "OPT" in os.environ else "") + ("libpython3.10.dll" if not pydebug else "libpython3.10d.dll") + " --enable-auto-import",
+        "CC": f"{tool_prefix}-gcc " + ("python310.dll" if not pydebug else "python310d.dll"),
+        "LDSHARED": f"{tool_prefix}-gcc -shared "+ ("python310.dll" if not pydebug else "python310d.dll") + " --enable-auto-import",
+        "OPT": (os.environ["OPT"] + " " if "OPT" in os.environ else "") + ("python310.dll" if not pydebug else "python310d.dll") + " --enable-auto-import",
         "_PYTHON_PROJECT_BASE": os.environ["_PYTHON_PROJECT_BASE"],
         "_PYTHON_HOST_PLATFORM": "wince-arm",
         "PYTHONPATH": os.environ["_PYTHON_PROJECT_BASE"] + "/build/lib.wince-arm-3.10:./Lib",
@@ -37,7 +37,7 @@ os.environ.update({
 })
 
 os.name = "ce"
-sys.platform = "wince-arm"
+sys.platform = "wince"
 
 import sysconfig
 import warnings
@@ -81,6 +81,7 @@ with warnings.catch_warnings():
     from Lib.distutils.core import Extension, setup
     from Lib.distutils.errors import CCompilerError, DistutilsError
     from Lib.distutils.spawn import find_executable
+    from Lib.distutils.unixccompiler import UnixCCompiler
 
 # Compile extensions used to test Python?
 TEST_EXTENSIONS = (sysconfig.get_config_var('TEST_MODULES') == 'yes')
@@ -119,6 +120,8 @@ CC = os.environ.get("CC")
 if not CC:
     CC = sysconfig.get_config_var("CC")
 
+if WINCE:
+    TEST_EXTENSIONS = False
 
 SUMMARY = """
 Python is an interpreted, interactive, object-oriented programming
@@ -906,7 +909,7 @@ class PyBuildExt(build_ext):
         if HOST_PLATFORM == 'hp-ux11':
             self.lib_dirs += ['/usr/lib/hpux64', '/usr/lib/hpux32']
 
-        if MACOS:
+        if MACOS or WINCE:
             # This should work on any unixy platform ;-)
             # If the user has bothered specifying additional -I and -L flags
             # in OPT and LDFLAGS we might as well use them here.
@@ -986,13 +989,15 @@ class PyBuildExt(build_ext):
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
 
         # profiler (_lsprof is for cProfile.py)
-        self.add(Extension('_lsprof', ['_lsprof.c', 'rotatingtree.c']))
+        if not WINCE:
+            self.add(Extension('_lsprof', ['_lsprof.c', 'rotatingtree.c']))
         # static Unicode character database
         self.add(Extension('unicodedata', ['unicodedata.c'],
                            depends=['unicodedata_db.h', 'unicodename_db.h'],
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
         # _opcode module
-        self.add(Extension('_opcode', ['_opcode.c']))
+        if not WINCE: # _opcode is built-in on Windows
+            self.add(Extension('_opcode', ['_opcode.c']))
         # asyncio speedups
         self.add(Extension("_asyncio", ["_asynciomodule.c"],
                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
@@ -1009,36 +1014,41 @@ class PyBuildExt(build_ext):
         # (If you have a really backward UNIX, select and socket may not be
         # supported...)
 
-        # fcntl(2) and ioctl(2)
-        libs = []
-        if (self.config_h_vars.get('FLOCK_NEEDS_LIBBSD', False)):
-            # May be necessary on AIX for flock function
-            libs = ['bsd']
-        #self.add(Extension('fcntl', ['fcntlmodule.c'],
-        #                   libraries=libs))
-        # pwd(3)
-        #self.add(Extension('pwd', ['pwdmodule.c']))
-        # grp(3)
-        #if not VXWORKS:
-        #    self.add(Extension('grp', ['grpmodule.c']))
-        # spwd, shadow passwords
-        #if (self.config_h_vars.get('HAVE_GETSPNAM', False) or
-        #        self.config_h_vars.get('HAVE_GETSPENT', False)):
-        #    self.add(Extension('spwd', ['spwdmodule.c']))
-        # AIX has shadow passwords, but access is not via getspent(), etc.
-        # module support is not expected so it not 'missing'
-        #elif not AIX:
-        #    self.missing.append('spwd')
+        if not WINCE:
+            # fcntl(2) and ioctl(2)
+            libs = []
+            if (self.config_h_vars.get('FLOCK_NEEDS_LIBBSD', False)):
+                # May be necessary on AIX for flock function
+                libs = ['bsd']
+            self.add(Extension('fcntl', ['fcntlmodule.c'],
+                            libraries=libs))
+            # pwd(3)
+            self.add(Extension('pwd', ['pwdmodule.c']))
+            # grp(3)
+            if not VXWORKS:
+                self.add(Extension('grp', ['grpmodule.c']))
+            # spwd, shadow passwords
+            if (self.config_h_vars.get('HAVE_GETSPNAM', False) or
+                    self.config_h_vars.get('HAVE_GETSPENT', False)):
+                self.add(Extension('spwd', ['spwdmodule.c']))
+            # AIX has shadow passwords, but access is not via getspent(), etc.
+            # module support is not expected so it not 'missing'
+            elif not AIX:
+                self.missing.append('spwd')
 
         # select(2); not on ancient System V
-        #self.add(Extension('select', ['selectmodule.c']))
+        if not WINCE:
+            self.add(Extension('select', ['selectmodule.c']))
+        else:
+            self.add(Extension('select', ['selectmodule.c'], libraries=['ws2']))
 
         # Memory-mapped files (also works on Win32).
         self.add(Extension('mmap', ['mmapmodule.c']))
 
         # Lance Ellinghaus's syslog module
         # syslog daemon interface
-        #self.add(Extension('syslog', ['syslogmodule.c']))
+        if not WINCE:
+            self.add(Extension('syslog', ['syslogmodule.c']))
 
         # Python interface to subinterpreter C-API.
         self.add(Extension('_xxsubinterpreters', ['_xxsubinterpretersmodule.c']))
@@ -1063,11 +1073,10 @@ class PyBuildExt(build_ext):
         # CSV files
         self.add(Extension('_csv', ['_csv.c']))
 
-        # POSIX subprocess module helper.
-        #self.add(Extension('_posixsubprocess', ['_posixsubprocess.c'],
-        #                   extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
-        # Windows CE
-        self.add(Extension('winsound', ['PC/winsound.c']))
+        if not WINCE:
+            # POSIX subprocess module helper.
+            self.add(Extension('_posixsubprocess', ['_posixsubprocess.c'],
+                            extra_compile_args=['-DPy_BUILD_CORE_MODULE']))
 
     def detect_test_extensions(self):
         # Python C API test module
@@ -1275,6 +1284,8 @@ class PyBuildExt(build_ext):
         if MACOS:
             # Issue #35569: Expose RFC 3542 socket options.
             kwargs['extra_compile_args'] = ['-D__APPLE_USE_RFC_3542']
+        if WINCE:
+            kwargs['libraries'] = ['ws2', 'iphlpapi']
 
         self.add(Extension('_socket', ['socketmodule.c'], **kwargs))
 
@@ -1636,6 +1647,9 @@ class PyBuildExt(build_ext):
             if sqlite_libfile:
                 sqlite_libdir = [os.path.abspath(os.path.dirname(sqlite_libfile))]
 
+        if WINCE:
+            sqlite_incdir = "WinCE/sqlite/include"
+            sqlite_libdir = ["WinCE/sqlite/lib"]
         if sqlite_incdir and sqlite_libdir:
             sqlite_srcs = ['_sqlite/cache.c',
                 '_sqlite/connection.c',
@@ -1693,6 +1707,9 @@ class PyBuildExt(build_ext):
             self.add(Extension('resource', ['resource.c']))
         else:
             self.missing.extend(['resource', 'termios'])
+
+        if WINCE:
+            self.add(Extension('winsound', ['PC/winsound.c']))
 
         # Platform-specific libraries
         if HOST_PLATFORM.startswith(('linux', 'freebsd', 'gnukfreebsd')):
@@ -1921,23 +1938,25 @@ class PyBuildExt(build_ext):
 
     def detect_modules(self):
         self.detect_simple_extensions()
-        #if TEST_EXTENSIONS:
-        #    self.detect_test_extensions()
+        if TEST_EXTENSIONS:
+            self.detect_test_extensions()
         self.detect_readline_curses()
-        #self.detect_crypt()
-        #self.detect_socket()
-        #self.detect_openssl_hashlib()
+        if not WINCE:
+            self.detect_crypt()
+        self.detect_socket()
+        self.detect_openssl_hashlib()
         self.detect_hash_builtins()
-        #self.detect_dbm_gdbm()
+        self.detect_dbm_gdbm()
         self.detect_sqlite()
         self.detect_platform_specific_exts()
         self.detect_nis()
         self.detect_compress_exts()
-        #self.detect_expat_elementtree()
+        self.detect_expat_elementtree()
         self.detect_multibytecodecs()
-        #self.detect_decimal()
-        #self.detect_ctypes()
-        #self.detect_multiprocessing()
+        if not WINCE:
+            self.detect_decimal()
+        self.detect_ctypes()
+        self.detect_multiprocessing()
         if not self.detect_tkinter():
             self.missing.append('_tkinter')
         self.detect_uuid()
@@ -2295,11 +2314,19 @@ class PyBuildExt(build_ext):
         elif HOST_PLATFORM.startswith('hp-ux'):
             extra_link_args.append('-fPIC')
 
+        elif HOST_PLATFORM.startswith('wince'):
+            sources.extend([
+                '_ctypes/malloc_closure.c',
+            ])
+            include_dirs.append('_ctypes/libffi_arm_wince')
+            extra_compile_args.append('-DUSING_MALLOC_CLOSURE_DOT_C=1')
+
         ext = Extension('_ctypes',
                         include_dirs=include_dirs,
                         extra_compile_args=extra_compile_args,
                         extra_link_args=extra_link_args,
-                        libraries=[],
+                        library_dirs=['.'],
+                        libraries=([] if not HOST_PLATFORM.startswith('wince') else ['ole32', 'oleaut32', 'uuid', 'ffi-8']),
                         sources=sources,
                         depends=depends)
         self.add(ext)
@@ -2497,6 +2524,9 @@ class PyBuildExt(build_ext):
             # libssl and libcrypto not found
             self.missing.extend(['_ssl', '_hashlib'])
             return None, None
+            
+        if WINCE:
+            openssl_libs.append("ws2")
 
         # Find OpenSSL includes
         ssl_incs = find_file(

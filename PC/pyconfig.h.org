@@ -102,10 +102,6 @@ WIN32 is still required for the locale module.
 // if include wince_compatibility.h after defined GetVersion, it conflicts.
 #include "wince_compatibility.h"
 #define GetVersion() (4)
-/* Windows CE does not support environment variables */
-#define getenv(v) (NULL)
-#define _wgetenv getenv
-#define environ (NULL)
 /* Redefine fileno to return an integer */
 #include <stdio.h>
 #undef fileno
@@ -267,6 +263,8 @@ typedef int pid_t;
 #  define COMPILER "[gcc]"
 #else
 #  define COMPILER "[arm-mingw32ce-gcc " __VERSION__ "]"
+#  undef PYD_PLATFORM_TAG
+#  define PYD_PLATFORM_TAG "wince_arm" 
 #endif
 #define PY_LONG_LONG long long
 #define PY_LLONG_MIN LLONG_MIN
@@ -352,7 +350,7 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 # ifndef MS_WINCE
 #       define PLATFORM "win32"
 # else
-#       define PLATFORM "wince-arm"
+#       define PLATFORM "wince"
 # endif
 #       define HAVE_LARGEFILE_SUPPORT
 #       define SIZEOF_VOID_P 4
@@ -759,11 +757,25 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* Define if you have the 'inet_pton' function. */
 #define HAVE_INET_PTON 1
 
+/* Define if you have the getaddrinfo function. */
+#ifdef MS_WINCE
+#  define HAVE_GETADDRINFO 1
+#endif
+
+/* Define if you have the getnameinfo function. */
+#ifdef MS_WINCE
+#  define HAVE_GETNAMEINFO 1
+#endif
+
 /* framework name */
 #define _PYTHONFRAMEWORK ""
 
 /* Define if libssl has X509_VERIFY_PARAM_set1_host and related function */
 #define HAVE_X509_VERIFY_PARAM_SET1_HOST 1
+
+#ifdef MS_WINCE
+# define HAVE_ADDRINFO 1
+#endif
 
 #define PLATLIBDIR "lib"
 

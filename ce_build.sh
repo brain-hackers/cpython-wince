@@ -11,11 +11,11 @@ export LD=$TOOL_PREFIX-ld
 export READELF=$TOOL_PREFIX-readelf
 export WINDRES=$TOOL_PREFIX-windres
 export LIBS="-lcoredll6 -lcoredll -lm -laygshell -lws2 -lcommctrl"
-export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./zlib-src -I./Modules/_ctypes/libffi_arm_wince"
-export LDFLAGS="-fno-strict-aliasing"
+export CFLAGS="-march=armv5tej -mcpu=arm926ej-s -Wno-attributes -DWC_NO_BEST_FIT_CHARS -D_WIN32_WCE=0x0600 -D_MAX_PATH=260 -D_UNICODE -DUNICODE -DPy_HAVE_ZLIB=1 -DLACK_OF_CRYPT_API -fvisibility=hidden -fno-pic -I./Modules/_ctypes/libffi_arm_wince -IWinCE/zlib/include -IWinCE/bzip2/include -IWinCE/lzma/include"
+export LDFLAGS="-fno-strict-aliasing -LWinCE/zlib/lib -LWinCE/bzip2/lib -LWinCE/lzma/lib"
 export CPPFLAGS="-fvisibility=hidden"
 export LIBFFI_INCLUDEDIR="Modules/_ctypes/libffi-arm-wince"
-export ZLIBDIR="./zlib-src"
+export OPENSSL="./WinCE/openssl"
 
 PY_DEBUG='no';
 
@@ -59,6 +59,27 @@ if [ ! -d build ]; then
     mkdir build
 fi
 
+cd libffi
+./autogen.sh
+./ce_build.sh
+cp arm-unknown-mingw32ce/.libs/libffi-8.dll ../
+cd ..
+
+# download libraries
+cd WinCE
+
+# download bzip2
+wget https://github.com/RasPython3/bzip2-ce/releases/download/2024-12-06/bzip2.zip
+unzip bzip2.zip -d bzip2
+rm bzip2.zip
+
+# download liblzma
+wget https://github.com/RasPython3/xz-ce/releases/download/2024-12-06/liblzma.zip
+unzip liblzma.zip -d lzma
+rm liblzma.zip
+
+cd ..
+
 touch make.log
 
 ac_cv_pthread_is_default=yes ac_cv_cxx_thread=yes ac_cv_file__dev_ptmx=no ac_cv_file__dev_ptc=no ac_cv_have_long_long_format=yes \
@@ -74,7 +95,10 @@ ac_cv_enable_implicit_function_declaration_error=no \
 --with-pydebug=$PY_DEBUG \
 --with-tcltk-includes="$TCLTK_INCS" \
 --with-tcltk-libs="$TCLTK_LIBS" \
---enable-optimizations |& tee make.log -a || err
+--enable-optimizations \
+--with-openssl-rpath=no \
+--with-openssl=$OPENSSL \
+--enable-loadable-sqlite-extensions |& tee make.log -a || err
 
 cat PC/pyconfig.h.org | grep -v "#endif /\* \!Py_CONFIG_H \*/" > PC/pyconfig.h
 cat pyconfig.h PC/pyconfig.h | grep "^#\s*define [A-Z0-9_]*" | sed "s/#\s*define/#define/" | sort | awk '{printf $1" "$2"\n"}' | uniq -c | awk '$1=="1"{printf "#define "$3"\n"}' > pyconfig.pre.tmp
@@ -90,11 +114,24 @@ echo "#endif /* !Py_CONFIG_H */" >> PC/pyconfig.h
 #rm pyconfig.tmp pyconfig.pre.tmp
 cp PC/pyconfig.h Modules/
 
-make -j $(nproc) \
+make -j $(nproc) python310.dll \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
 CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
 
-make install \
+# build openssl
+cp python310.dll openssl/
+cd openssl
+./Configure no-idea no-mdc2 no-rc5 no-weak-ssl-ciphers no-async no-engine arm-mingw32ce-python
+make build_generated libcrypto-3.dll libssl-3.dll -j$(nproc)
+cp libcrypto-3.dll libssl-3.dll ../
+cd ..
+mkdir WinCE/openssl/lib
+cp libcrypto-3.dll WinCE/openssl/lib/libcrypto.dll
+cp libssl-3.dll WinCE/openssl/lib/libssl.dll
+
+rm -f WinCE/dllhash.o
+
+make -j $(nproc) install \
 BLDSHARED="$TOOL_PREFIX-gcc -shared" \
 CROSS-COMPILE=$TOOL_PREFIX- CROSS_COMPILE_TARGET=yes |& tee make.log -a || err
 

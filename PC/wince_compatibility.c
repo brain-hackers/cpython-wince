@@ -493,6 +493,11 @@ GetFullPathNameA(const char *path, DWORD num_buf, char *buf, char **file_part)
     WCHAR wbuf[MAX_PATH + 1];
     DWORD n;
 
+    if (path == NULL || strlen(path) == 0) {
+        SetLastError(123); // ERROR_INVALID_NAME
+        return 0;
+    }
+
     wince_absolute_path_to_wide(path, wbuf, MAX_PATH);
     n = WideCharToMultiByte(CP_ACP, 0, wbuf, -1, buf, num_buf, NULL, NULL);
     if (file_part) {
@@ -508,6 +513,11 @@ GetFullPathNameA(const char *path, DWORD num_buf, char *buf, char **file_part)
 DWORD
 GetFullPathNameW(const wchar_t *path, DWORD num_buf, wchar_t *buf, wchar_t **file_part)
 {
+    if (path == NULL || wcslen(path) == 0) {
+        SetLastError(123); // ERROR_INVALID_NAME
+        return 0;
+    }
+
     wince_absolute_path_wide(path, buf, num_buf);
     if (file_part) {
         *file_part = wcsrchr(buf, '\\');
@@ -815,6 +825,16 @@ GetSystemTimeAsFileTime(FILETIME *lpSystemTimeAsFileTime)
     GetSystemTime(&systime);
 
     SystemTimeToFileTime(&systime, lpSystemTimeAsFileTime);
+}
+
+int
+wince_GetSystemTimeAdjustment(unsigned long *lpTimeAdjustment, unsigned long *lpTimeIncrement,
+                              int *lpTimeAdjustmentDisabled)
+{
+    *lpTimeAdjustment = 0L;
+    *lpTimeIncrement = 0L;
+    *lpTimeAdjustmentDisabled = 1;
+    return 1;
 }
 
 static char standard_name[32] = "GMT";
@@ -1269,7 +1289,7 @@ _commit(int handle)
 }
 
 int
-_dup(int fd)
+wince_dup(int fd)
 {
     HANDLE orgHandle;
     HANDLE newHandle;
@@ -2629,7 +2649,7 @@ PathCchSkipRoot(wchar_t *pszPath, wchar_t **ppszRootEnd)
 }
 
 double
-copysign(double x, double y)
+wince_copysign(double x, double y)
 {
     if (x >= 0 && y >= 0 || x < 0 && y < 0)
         return x;
@@ -2692,7 +2712,8 @@ wchar_t **
 CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
 {
     wchar_t **argv;
-    argv = (wchar_t **)calloc(64, sizeof(wchar_t *));
+    int argvSize = 64;
+    argv = (wchar_t **)calloc(argvSize, sizeof(wchar_t *));
     if (argv == NULL)
         return NULL;
 
@@ -2704,6 +2725,8 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
     int spaced = 1;
     int error = 0;
 
+    wchar_t exeName[MAX_PATH + 1];
+
     int argTmpSize = 64;
 
     int cmdlen = (int)wcslen(lpCmdLine);
@@ -2712,7 +2735,7 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
 
     wchar_t *argTmp;
     wchar_t *argTmpOrg;
-    argTmpOrg = (wchar_t *)calloc(64, sizeof(wchar_t));
+    argTmpOrg = (wchar_t *)calloc(argTmpSize, sizeof(wchar_t));
     argTmp = argTmpOrg;
 
     if (argTmp == NULL) {
@@ -2720,31 +2743,35 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         return NULL;
     }
 
-    wchar_t exeName[64] = L"";
-    if (exeName == NULL) {
+    GetModuleFileName(NULL, exeName, MAX_PATH + 1);
+    argv[0] = (wchar_t *)calloc(wcslen(exeName)+1, sizeof(wchar_t));
+    if (argv[0] == NULL) {
         free(argv);
         free(argTmpOrg);
         return NULL;
     }
-    GetModuleFileName(NULL, exeName, 64);
-    argv[0] = exeName;
+    wcscpy(argv[0], exeName);
 
     while (i < cmdlen) {
         if (i < 0 && cmdlen == 0)
             break;
         i++;
-        if (spaced && *curChar != L' ' && *curChar != L'\t') {
+        if (spaced && *curChar != L' ' && *curChar != L'\t' && *curChar != L'\0') {
             spaced = 0;
             i2 = 0;
             argc++;
+        } else if (spaced) {
+            curChar++;
+            continue;
         }
         if (i2 >= argTmpSize) {
-            wchar_t *tmp = realloc(argTmpOrg, (argTmpSize += 16) * sizeof(wchar_t));
+            argTmpSize += 16;
+            wchar_t *tmp = (wchar_t *)realloc(argTmpOrg, argTmpSize * sizeof(wchar_t));
             if (tmp == NULL) {
                 error = 1;
                 break;
             }
-            argTmp = tmp + (argTmpOrg - argTmp);
+            argTmp = tmp + (argTmp - argTmpOrg);
             argTmpOrg = tmp;
         }
         if (*curChar == L'\\') {
@@ -2754,18 +2781,17 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         }
         if (*curChar == L'"') {
             if (i2 + (backslash + 1) / 2 >= argTmpSize) {
-                wchar_t *tmp = realloc(
-                    argTmpOrg, sizeof(wchar_t) * (argTmpSize += 16 * ((backslash + 1) / 2)));
+                argTmpSize += 16 * ((backslash + 1) / 2);
+                wchar_t *tmp = (wchar_t *)realloc(argTmpOrg, argTmpSize * sizeof(wchar_t));
                 if (tmp == NULL) {
                     error = 1;
                     break;
                 }
-                argTmp = tmp + (argTmpOrg - argTmp);
+                argTmp = tmp + (argTmp - argTmpOrg);
                 argTmpOrg = tmp;
             }
-            for (int index = 0; index < backslash; index += 2) {
+            for (; backslash > 1; backslash -= 2) {
                 *argTmp = L'\\';
-                backslash -= 2;
                 argTmp++;
                 i2++;
             }
@@ -2796,11 +2822,31 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
                 error = 1;
                 break;
             }
-            wcscpy(argv[argc - 1], argTmpOrg);
+            wcsncpy(argv[argc - 1], argTmpOrg, i2);
+            if (argTmpSize > 64) {
+                argTmpSize = 64;
+                free(argTmpOrg);
+                argTmpOrg = (wchar_t *)calloc(argTmpSize, sizeof(wchar_t));
+                if (argTmpOrg == NULL) {
+                    error = 1;
+                    break;
+                }
+            }
+            else {
+                wmemset(argTmpOrg, L'\0', i2);
+            }
             argTmp = argTmpOrg;
-            wmemset(argTmpOrg, L'\0', i2);
             spaced = 1;
             curChar++;
+            if (argvSize >= argc) {
+                argvSize += 16;
+                argv = (wchar_t **)realloc(argv, argvSize * sizeof(wchar_t *));
+                if (argv == NULL) {
+                    free(argTmpOrg);
+                    error = 1;
+                    break;
+                }
+            }
             continue;
         }
         *argTmp = *curChar;
@@ -2816,7 +2862,7 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         return NULL;
     }
 
-    wchar_t **result = realloc(argv, sizeof(wchar_t *) * argc);
+    wchar_t **result = (wchar_t **)realloc(argv, sizeof(wchar_t *) * (argc + 1));
     if (result != NULL) {
         *pNumArgs = argc;
     }
@@ -2824,14 +2870,8 @@ CommandLineToArgvW(const wchar_t *lpCmdLine, int *pNumArgs)
         free(argv);
     }
     free(argTmpOrg);
+    result[argc] = 0;
     return result;
-}
-
-DWORD
-wince_GetEnvironmentVariable()
-{
-    SetLastError(ERROR_ENVVAR_NOT_FOUND);
-    return 0;
 }
 
 /*

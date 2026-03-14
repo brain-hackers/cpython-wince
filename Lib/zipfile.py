@@ -366,7 +366,7 @@ class ZipInfo (object):
         self._compresslevel = None      # Level for the compressor
         self.comment = b""              # Comment for each file
         self.extra = b""                # ZIP extra data
-        if sys.platform == 'win32':
+        if sys.platform in ('win32', 'wince'):
             self.create_system = 0          # System which created ZIP archive
         else:
             # Assume everything else is unix-y

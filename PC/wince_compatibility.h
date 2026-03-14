@@ -94,6 +94,9 @@ typedef long HRESULT;
 
 #define EWOULDBLOCK EAGAIN /* Operation would block */
 
+#define ECONNRESET 104 /* Connection reset by peer */
+#define EISCONN 106    /* Transport endpoint is already connected */
+
 /*
  * Because we need a per-thread errno, we define a function
  * pointer that we can call to return a pointer to the errno
@@ -141,11 +144,14 @@ extern const char *_sys_errlist[];
  * we need to define these as mush as possible.
  */
 
+WINCE_PyAPI_FUNC(char *) strerror(int errnum);
+
 unsigned long getVersion();
 
 void *SecureZeroMemory(void *ptr, size_t cnt);
 
-double copysign(double x, double y);
+double wince_copysign(double x, double y);
+#define copysign wince_copysign
 
 // Modules/_io/winconsoleio.c
 #define C3_HIGHSURROGATE 0x0800
@@ -213,16 +219,15 @@ size_t wcsnlen(const wchar_t *str, size_t numberOfElements);
 int wcscat_s(wchar_t *strDestination, size_t numberOfElements, const wchar_t *strSource);
 
 #define _chsize_s _chsize
-#define wcscpy_s(dest, size, src) (wcscpy(dest, src))
-#define wcsncpy_s(d, n, s, c) (wcsncpy(d, s, c))
+#define wcscpy_s(dest, size, src) (wcslen(src) >= size ? -1 : (wcscpy(dest, src) == NULL ? -1 : 0))
+#define wcsncpy_s(d, n, s, c) \
+    ((n < c ? -1 : (wcsncpy(d, s, c) == NULL ? -1 : 0)))  // FIXME-WINCE: STRUNCATE value?
 #define wcsnlen_s(str, num) str == NULL ? 0 : wcsnlen(str, num)
 #define wcsncasecmp _wcsnicmp
 #define wcstok_s wcstok
 #define memcpy_s(d, ds, s, c) (memcpy(d, s, c))
 
 int _heapmin(void);
-
-double copysign(double x, double y);
 
 #define _LK_UNLCK 0  /* Unlock */
 #define _LK_LOCK 1   /* Lock */
@@ -243,7 +248,9 @@ int _locking(int fd, int mode, long nbytes);
 #define OpenProcessToken(p, d, t) (0)
 #define AdjustTokenPrivileges(t, d, n, b, p, r) (0)
 
-#define GetSystemTimeAdjustment(t, i, d) (0)
+int wince_GetSystemTimeAdjustment(unsigned long *lpTimeAdjustment, unsigned long *lpTimeIncrement,
+                                  int *lpTimeAdjustmentDisabled);
+#define GetSystemTimeAdjustment wince_GetSystemTimeAdjustment
 
 #define GetFileInformationByHandleEx(h, c, i, s) (GetFileInformationByHandle(h, i))
 #define OpenFileMapping(d, i, n) (NULL)
@@ -351,7 +358,7 @@ void tzset(void);
 
 #undef GetFileType
 
-int wince_GetFileType(void *handle);
+WINCE_PyAPI_FUNC(int) wince_GetFileType(void *handle);
 
 #define GetFileType wince_GetFileType
 
@@ -386,8 +393,8 @@ int _read(int handle, void *buffer, unsigned int count);
 long _lseek(int handle, long offset, int origin);
 __int64 _lseeki64(int handle, __int64 offset, int origin);
 int _commit(int handle);
-int _dup(int fd);
-#define dup _dup
+WINCE_PyAPI_FUNC(int) wince_dup(int fd);
+#define dup wince_dup
 #define _open_osfhandle(h, m) (h)
 
 #define open _open
@@ -488,6 +495,7 @@ struct _stat {
     time_t st_mtime; /* Modified time */
     time_t st_ctime; /* Creation time */
 };
+#define _STAT_DEFINED
 
 int _fstat(int handle, struct _stat *buffer);
 int _stat(const char *path, struct _stat *buffer);
@@ -596,14 +604,32 @@ WINCE_PyAPI_FUNC(int) wince_isctype(int ch, int classification);
 #define SIGINT 0
 
 /* Environment variables are not supported */
-WINCE_PyAPI_FUNC(DWORD) wince_GetEnvironmentVariable();
-#define GetEnvironmentVariable(name, buf, size) wince_GetEnvironmentVariable()
+WINCE_PyAPI_FUNC(DWORD) wince_GetEnvironmentVariable(wchar_t *, wchar_t *, DWORD);
+WINCE_PyAPI_FUNC(BOOL) wince_SetEnvironmentVariable(wchar_t *, wchar_t *);
+#define GetEnvironmentVariable wince_GetEnvironmentVariable
+#define SetEnvironmentVariable wince_SetEnvironmentVariable
 #define GetEnvironmentVariableW GetEnvironmentVariable
-/* When setting environment variables, do nothing and succeed */
-#define SetEnvironmentVariableA(n, v) (TRUE)
-#define SetEnvironmentVariableW(n, v) (TRUE)
+#define SetEnvironmentVariableW SetEnvironmentVariable
 
 #define ExpandEnvironmentStringsW(s, d, n) (0)
+
+#define _MAX_ENV 0x7fff
+
+extern wchar_t **wince_wenviron;
+extern char **wince_environ;
+
+char *wince_getenv(const char *);
+wchar_t *wince_wgetenv(const wchar_t *);
+int wince_putenv(const char *);
+int wince_wputenv(const wchar_t *);
+
+#define _wenviron wince_wenviron
+#define _environ wince_environ
+#define environ _environ
+#define getenv wince_getenv
+#define _wgetenv wince_wgetenv
+#define _putenv wince_putenv
+#define _wputenv wince_wputenv
 
 int _getpid(void);
 #define getpid _getpid
@@ -651,7 +677,7 @@ typedef struct _WIN32_FIND_DATAA WIN32_FIND_DATAA;
 typedef struct _WIN32_FIND_DATAW WIN32_FIND_DATAW;
 typedef void *HANDLE;
 
-HANDLE wince_FindFirstFileW(const wchar_t *filename, WIN32_FIND_DATAW *data);
+WINCE_PyAPI_FUNC(HANDLE) wince_FindFirstFileW(const wchar_t *filename, WIN32_FIND_DATAW *data);
 #define FindFirstFileW wince_FindFirstFileW
 HANDLE FindFirstFileA(const char *filename, WIN32_FIND_DATAA *data);
 

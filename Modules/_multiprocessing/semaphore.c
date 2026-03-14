@@ -141,7 +141,11 @@ _multiprocessing_SemLock_acquire_impl(SemLockObject *self, int blocking,
     Py_BEGIN_ALLOW_THREADS
     if (sigint_event != NULL)
         ResetEvent(sigint_event);
+#ifndef MS_WINCE
     res = WaitForMultipleObjectsEx(nhandles, handles, FALSE, full_msecs, FALSE);
+#else
+    res = WaitForMultipleObjects(nhandles, handles, FALSE, full_msecs);
+#endif
     Py_END_ALLOW_THREADS
 
     /* handle result */

@@ -12,12 +12,14 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 wchar_t **wargv;
 int argc;
 
+wchar_t **wince_wenviron;
+char **wince_environ;
+
 HWND hConsoleWindow;
 
 HANDLE hTh;
 HANDLE ghInitializedEv;
-HANDLE ghFinalizeEv;
-HANDLE ghFinalizeDoneEv;
+HANDLE ghPythonDoneEv;
 HANDLE ghReadlineEv;
 HANDLE ghReadlinePopEv;
 HANDLE ghWriteConsoleEv;
@@ -40,6 +42,10 @@ LONG fontW, fontH, fontPadX, fontPadY = 0L;
 BOOL PaintInitDone = FALSE;
 int Exited = 0;
 
+int _wince_hash_checked = 0;
+
+extern char *WinCEShell_DllHash;
+
 #define BUILD_PYTHONW_FOR_WINCE 1
 
 #ifdef BUILD_PYTHONW_FOR_WINCE
@@ -47,6 +53,11 @@ int showConsole = 1;
 #else
 int showConsole = 0;
 #endif
+
+static char **_env = NULL;
+static wchar_t **_wenv = NULL;
+static int env_ready = 0;
+static size_t envsize = 0;
 
 int
 WinCEShell_fileno(FILE *stream)
@@ -134,6 +145,9 @@ WNDPROC TextInputProc, ShellLogProc;
 void
 SetCmdline(HWND hWnd)
 {
+    if (Exited) {
+        return;
+    }
     SetWindowText(hWnd, curText);
     UpdateWindow(hWnd);
 }
@@ -141,6 +155,9 @@ SetCmdline(HWND hWnd)
 void
 SetPrefix(HWND hWnd)
 {
+    if (Exited) {
+        return;
+    }
     if (prefixText != NULL)
         prefixW = CalcTextWidth(wcsnlen(prefixText, 64));
     else
@@ -153,6 +170,9 @@ SetPrefix(HWND hWnd)
 void
 SetShelllog(HWND hWnd)
 {
+    if (Exited) {
+        return;
+    }
     HDC hdc;
     RECT rc;
     rc.right = W_WIDTH;
@@ -194,6 +214,8 @@ addReadline(wchar_t *text)
         defalut:
             return 0;
     }
+    if (Exited)
+        return 1;
     ResetEvent(ghReadlineEv);
     wchar_t **tmpBuf;
     tmpBuf = (wchar_t **)realloc(readlineBuf, (readlineBufLen + 1) * sizeof(wchar_t *));
@@ -233,12 +255,11 @@ popReadline(wchar_t *output)
     ResetEvent(ghReadlinePopEv);
     wchar_t **tmpBuf;
     if (readlineBufLen == 1) {
-        ResetEvent(ghReadlineEv);
         SetEvent(ghReadlinePopEv);
-        if (!Exited)
-            return 0;
-        else
+        if (Exited)
             return -1;
+        ResetEvent(ghReadlineEv);
+        return 0;
     }
     if (readlineBuf[1] == NULL)
         return 0;
@@ -269,6 +290,7 @@ WinCEShell_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prefix)
         return NULL;
     int res;
     wchar_t *tmp;
+    char *result;
     int prefixLen = 0;
     tmp = (wchar_t *)calloc(65536, sizeof(wchar_t));
     if (tmp == NULL)
@@ -296,13 +318,12 @@ WinCEShell_readline(FILE *sys_stdin, FILE *sys_stdout, const char *prefix)
     }
     if (res < 0) {
         free(tmp);
-        PyErr_SetString(PyExc_SystemExit, "");
-        return NULL;
+        result = (char *)PyMem_RawCalloc(1, sizeof(char));
+        return result;
     }
     int c;
     if (tmp != NULL)
         WinCEShell_WriteConsole(NULL, tmp, wcslen(tmp), &c, NULL);
-    char *result;
     int n;
     n = WideCharToMultiByte(CP_UTF8, 0, tmp + prefixLen, -1, NULL, 0, NULL, NULL);
     result = (char *)PyMem_RawCalloc(n, sizeof(char));
@@ -587,7 +608,9 @@ WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 DeleteObject(fgBrush);
             if (bgBrush)
                 DeleteObject(bgBrush);
-            Exited = 1;
+            if (!Exited)
+                Exited = 2;
+            PostQuitMessage(0);
             break;
         default:
             return DefWindowProc(hWnd, msg, wp, lp);
@@ -601,6 +624,13 @@ typedef struct {
     LPWSTR lpsCmdLine;
     int nCmdShow;
 } WINCE_SHELL_ARGS;
+
+int
+_call_py_exit(void *arg)
+{
+    Py_Exit(0);
+    return 0;
+}
 
 int
 WinCEShell(HINSTANCE hCurInst)
@@ -636,10 +666,10 @@ WinCEShell(HINSTANCE hCurInst)
         UpdateWindow(hConsoleWindow);
     }
 
-    ghReadlineEv = CreateEvent(NULL, TRUE, FALSE, L"readlineEv");
-    ghReadlinePopEv = CreateEvent(NULL, TRUE, TRUE, L"readlinePopEv");
-    ghWriteConsoleEv = CreateEvent(NULL, TRUE, TRUE, L"WriteConsoleEv");
-    ghWaitForCharEv = CreateEvent(NULL, TRUE, FALSE, L"waitForCharEv");
+    ghReadlineEv = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ghReadlinePopEv = CreateEvent(NULL, TRUE, TRUE, NULL);
+    ghWriteConsoleEv = CreateEvent(NULL, TRUE, TRUE, NULL);
+    ghWaitForCharEv = CreateEvent(NULL, TRUE, FALSE, NULL);
     SetEvent(ghInitializedEv);
 
     MSG msg;
@@ -653,11 +683,24 @@ WinCEShell(HINSTANCE hCurInst)
 
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        if (Exited) {
-            SetEvent(ghReadlineEv);
-            WaitForSingleObject(ghFinalizeEv, INFINITE);
-            SetEvent(ghFinalizeDoneEv);
-            PostQuitMessage(0);
+    }
+
+    if (Exited == 2) {  // The window was destroyed by the user
+
+        // Let Python exit
+        PyGILState_STATE state = PyGILState_Ensure();
+        Py_AddPendingCall(&_call_py_exit, NULL);
+        PyGILState_Release(state);
+
+        // Let readline tell Python EOF
+        SetEvent(ghReadlineEv);
+
+        // Wait 5 sec for Python exiting
+        WaitForSingleObject(ghPythonDoneEv, 5000);
+
+        if (Exited != 1) {
+            // Python could not exit by the deadline
+            exit(0);
         }
     }
 
@@ -802,7 +845,7 @@ WinCEShell_WriteConsole(HANDLE handle, wchar_t *lpBuffer, DWORD nNumberOfCharsTo
     long len;
     int redraw = 0;
 
-    if (lpBuffer == NULL)
+    if (lpBuffer == NULL || Exited)
         return 0;
     /*if (wcsnlen(lpBuffer, nNumberOfCharsToWrite+1) == nNumberOfCharsToWrite+1)
     {
@@ -863,31 +906,507 @@ WinCEShell_ReadConsole(HANDLE handle, LPVOID lpBuffer, DWORD nNumberOfCharsToRea
 }
 
 void
-WinCEShell_Cleanup()
+WinCEShell_CleanUp()
 {
     if (wargv != NULL) {
         for (int i = 0; i < argc; i++) free(wargv[i]);
         free(wargv);
+        wargv = NULL;
     }
-    SetEvent(ghFinalizeEv);
-    WaitForSingleObject(ghFinalizeDoneEv, 10);
+    if (_env != NULL) {
+        for (int i = 0; _env[i] != NULL; i++) free(_env[i]);
+        free(_env);
+        _env = NULL;
+    }
+    if (_wenv != NULL) {
+        for (int i = 0; _wenv[i] != NULL; i++) free(_wenv[i]);
+        free(_wenv);
+        _wenv = NULL;
+    }
+    if (history != NULL) {
+        for (int i = 0; history[i] != NULL; i++) free(history[i]);
+        free(history);
+        history = NULL;
+    }
+    if (readlineBuf != NULL) {
+        for (int i = 0; readlineBuf[i] != NULL; i++) free(readlineBuf[i]);
+        free(readlineBuf);
+        readlineBuf = NULL;
+    }
+    free(prefixText);
+    free(curText);
+    free(logBuf);
+}
+
+char *
+wince_getenv(const char *varname)
+{
+    if (env_ready <= 0 || _env == NULL)
+        return NULL;
+
+    int i = 0;
+    while (_env[i] != NULL) {
+        if (!_strnicmp(_env[i], varname, strlen(varname))) {
+            if (!strncmp(_env[i] + strlen(varname), "=", 1)) {
+                break;
+            }
+        }
+        i++;
+    }
+    if (_env[i] == NULL)
+        return NULL;
+    return _env[i] + strlen(varname) + 1;
+}
+
+wchar_t *
+wince_wgetenv(const wchar_t *varname)
+{
+    if (env_ready <= 0 || _wenv == NULL)
+        return NULL;
+
+    int i = 0;
+    while (_wenv[i] != NULL) {
+        if (!_wcsnicmp(_wenv[i], varname, wcslen(varname))) {
+            if (!wcsncmp(_wenv[i] + wcslen(varname), L"=", 1)) {
+                break;
+            }
+        }
+        i++;
+    }
+    if (_wenv[i] == NULL)
+        return NULL;
+    return _wenv[i] + wcslen(varname) + 1;
+}
+
+int
+wince_putenv(const char *envstr)
+{
+    if (env_ready <= 0 || _env == NULL)
+        return -1;
+
+    char *c;
+    char *e;
+
+    c = strchr(envstr, '=');
+    if (c == NULL)
+        return -1;
+
+    int i = 0;
+    while (_env[i] != NULL) {
+        if (!_strnicmp(_env[i], envstr, c - envstr + 1)) {
+            break;
+        }
+        i++;
+    }
+    if (*(c + 1) != '\0') {
+        char *tmp;
+        wchar_t *tmpw;
+        char *ch;
+        int tmplen;
+        tmp = (char *)calloc(strlen(envstr) + 1, sizeof(char));
+        if (tmp == NULL) {
+            free(tmp);
+            return -1;
+        }
+        strcpy(tmp, envstr);
+        ch = tmp;
+        while (*ch != '=') {
+            *ch = toupper(*ch);
+            if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_", *ch) == NULL) {
+                free(tmp);
+                return -1;
+            }
+            ch++;
+        }
+        tmplen = MultiByteToWideChar(CP_UTF8, 0, tmp, -1, NULL, 0);
+        tmpw = (wchar_t *)calloc(tmplen, sizeof(wchar_t));
+        if (tmpw == NULL) {
+            free(tmp);
+            free(tmpw);
+            return -1;
+        }
+
+        MultiByteToWideChar(CP_UTF8, 0, tmp, -1, tmpw, tmplen);
+        if (tmplen > 4 && !_wcsnicmp(tmpw, L"PWD=", 4)) {
+            SetCurrentDirectoryW(tmpw + 4);
+        }
+        if (_env[i] == NULL) {
+            if (envsize == i) {
+                char **tmpenv;
+                wchar_t **tmpwenv;
+                tmpenv = (char **)realloc(_env, (envsize + 16) * sizeof(char *));
+                tmpwenv = (wchar_t **)realloc(_wenv, (envsize + 16) * sizeof(wchar_t *));
+                if (tmpenv == NULL || tmpwenv == NULL) {
+                    if (tmpenv != NULL)
+                        _env = tmpenv;
+                    if (tmpwenv != NULL)
+                        _wenv = tmpwenv;
+                    for (int i = 0; _env[i] != NULL; i++) free(_env[i]);
+                    for (int i = 0; _wenv[i] != NULL; i++) free(_wenv[i]);
+                    free(_env);
+                    free(_wenv);
+                    env_ready = -1;
+                    return -1;
+                }
+                _env = tmpenv;
+                _wenv = tmpwenv;
+                envsize += 16;
+            }
+        }
+        else {
+            free(_env[i]);
+            free(_wenv[i]);
+        }
+        _env[i] = tmp;
+        _wenv[i] = tmpw;
+    }
+    else if (_env[i] != NULL) {
+        free(_env[i]);
+        free(_wenv[i]);
+        while (_env[i] != NULL) {
+            i++;
+            _env[i - 1] = _env[i];
+            _wenv[i - 1] = _wenv[i];
+        }
+        if (i + 16 < envsize) {
+            envsize -= 16;
+        }
+    }
+    return 0;
+}
+
+int
+wince_wputenv(const wchar_t *envstr)
+{
+    char *tmp;
+    int res;
+    int tmpbufsize;
+    tmpbufsize = WideCharToMultiByte(CP_UTF8, 0, envstr, -1, NULL, 0, NULL, NULL);
+    tmp = (char *)calloc(tmpbufsize, sizeof(char));
+    WideCharToMultiByte(CP_UTF8, 0, envstr, -1, tmp, tmpbufsize, NULL, NULL);
+    res = wince_putenv(tmp);
+    free(tmp);
+    return res;
+}
+
+DWORD
+wince_GetEnvironmentVariable(wchar_t *name, wchar_t *buf, DWORD size)
+{
+    wchar_t *value;
+    value = _wgetenv(name);
+    if (value == NULL) {
+        SetLastError(ERROR_ENVVAR_NOT_FOUND);
+        return 0;
+    }
+    if (size <= wcslen(value)) {
+        return wcslen(value) + 1;
+    }
+    wcscpy(buf, value);
+    return wcslen(value);
+}
+
+BOOL
+wince_SetEnvironmentVariable(wchar_t *name, wchar_t *value)
+{
+    wchar_t *envstr;
+    int result;
+    if (name == NULL)
+        return FALSE;
+    if (value != NULL)
+        envstr = (wchar_t *)calloc(wcslen(name) + wcslen(value) + 2, sizeof(wchar_t));
+    else
+        envstr = (wchar_t *)calloc(wcslen(name) + 2, sizeof(wchar_t));
+
+    if (envstr == NULL)
+        return FALSE;
+
+    if (value != NULL)
+        swprintf(envstr, L"%ls=%ls", name, value);
+    else
+        swprintf(envstr, L"%ls=", name);
+
+    result = _wputenv(envstr);
+    free(envstr);
+    if (result == 0)
+        return TRUE;
+    return FALSE;
+}
+
+#define ENV_DEFAULT_SIZE 64
+
+int
+WinCEShell_PrepareEnv()
+{
+    if (env_ready != 0)
+        return 0;
+
+    _env = (char **)calloc(ENV_DEFAULT_SIZE, sizeof(char *));
+    _wenv = (wchar_t **)calloc(ENV_DEFAULT_SIZE, sizeof(wchar_t *));
+    if (_env == NULL || _wenv == NULL) {
+        free(_env);
+        free(_wenv);
+        _env = NULL;
+        _wenv = NULL;
+        env_ready = -1;
+        return -1;
+    }
+    envsize = ENV_DEFAULT_SIZE;
+    env_ready = 1;
+    return 0;
+}
+
+#undef ENV_DEFAULT_SIZE
+
+int
+WinCEShell_LoadEnvFromFile(wchar_t *filename)
+{
+    char *c, *d, *e;
+    static wchar_t *wtext;
+    char *text;
+    int textlen;
+    int isdefault = 0;
+
+    char newline[3] = "\r\n";
+
+    HANDLE hFile;
+
+    if (env_ready == 0) {
+        WinCEShell_PrepareEnv();
+        isdefault = 1;
+    }
+
+    char *default_text;
+    default_text = "PYTHONCASEOK=1";
+
+    hFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                       isdefault ? OPEN_ALWAYS : OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (GetLastError() != ERROR_ALREADY_EXISTS) {
+        if (isdefault) {
+            text = (char *)calloc(strlen(default_text) + 1, sizeof(char));
+            strcpy(text, default_text);
+        }
+        else {  // ERROR_FILE_NOT_FOUND
+            return -1;
+        }
+        textlen = (DWORD)strlen(text);
+
+        int written = 0;
+        if (!WriteFile(hFile, text, textlen, &written, NULL)) {
+            CloseHandle(hFile);
+            return -1;
+        }
+    }
+    else {
+        DWORD filesize;
+        filesize = GetFileSize(hFile, NULL);
+        if (filesize == 0xffffffff) {
+            CloseHandle(hFile);
+            return -1;
+        }
+        text = (char *)calloc(filesize + 1, sizeof(char));
+        if (text == NULL || !ReadFile(hFile, text, filesize, &textlen, NULL)) {
+            free(text);
+            CloseHandle(hFile);
+            return -1;
+        }
+    }
+    CloseHandle(hFile);
+
+    c = text;
+
+    if (strstr(text, newline) == NULL) {
+        strcpy(newline, "\n");
+    }
+
+    // BOM
+    if (!strncmp(c, "\xEF\xBB\xBF", 3)) {
+        c += 3;
+    }
+
+    while (c != NULL && *c != '\0') {
+        d = c;
+        c = strstr(c, newline);
+        if (c != NULL) {
+            *c = '\0';
+        }
+        if (*d != ';' && strlen(d) > 0) {
+            if (strchr(d, '=') == NULL)
+                goto error;
+
+            char *envstr = (char *)calloc(strlen(d) + 1, sizeof(char));
+            if (envstr == NULL)
+                goto error;
+
+            e = envstr;
+            while (*d != ' ' && *d != '=') {
+                *e = *d;
+                d++;
+                e++;
+            }
+            if (strspn(d, "= ") <= strcspn(d, "=")) {
+                free(envstr);
+                goto error;
+            }
+
+            *e = '=';
+            d += strspn(d, "= ");
+            strcpy(e + 1, d);
+
+            if (wince_putenv(envstr) < 0) {
+                free(envstr);
+                goto error;
+            }
+
+            free(envstr);
+        }
+        if (c == NULL)
+            break;
+        if (*(c + 1) == '\n') {
+            c++;
+        }
+        c++;
+    }
+    free(text);
+    return 0;
+error:
+    free(text);
+    return -1;
+}
+
+int
+WinCEShell_SetupRegistry()
+{
+    HKEY hKey, hSubKey;
+    wchar_t progName[MAX_PATH + 1];
+    wchar_t wstr[MAX_PATH + 1];
+    static int done = 0;
+
+    if (done)
+        return 0;
+
+    if (!GetModuleFileName(NULL, progName, MAX_PATH + 1))
+        return -1;
+
+    switch (RegCreateKeyEx(HKEY_CLASSES_ROOT, L".py", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hKey,
+                           NULL)) {
+        case ERROR_SUCCESS:
+            break;
+        default:
+            return -1;
+    }
+    switch (RegSetValueEx(hKey, L"Default", 0, REG_SZ, (LPBYTE)(L"pyfile"),
+                          (DWORD)(7 * sizeof(wchar_t)))) {
+        case ERROR_SUCCESS:
+            break;
+        default:
+            RegCloseKey(hKey);
+            return -1;
+    }
+    RegCloseKey(hKey);
+
+    switch (RegCreateKeyEx(HKEY_CLASSES_ROOT, L"pyfile", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL,
+                           &hKey, NULL)) {
+        case ERROR_SUCCESS:
+            break;
+        default:
+            return -1;
+    }
+    if (RegCreateKeyEx(hKey, L"DefaultIcon", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &hSubKey,
+                       NULL) == ERROR_SUCCESS) {
+        swprintf(wstr, L"%ls, -2", progName);
+        if (RegSetValueEx(hSubKey, L"Default", 0, REG_SZ, (LPBYTE)wstr,
+                          (DWORD)(wcslen(wstr) * sizeof(wchar_t))) != ERROR_SUCCESS) {
+            RegCloseKey(hSubKey);
+            RegCloseKey(hKey);
+            return -1;
+        }
+    }
+    else {
+        RegCloseKey(hKey);
+        return -1;
+    }
+    RegCloseKey(hSubKey);
+
+    if (RegCreateKeyEx(hKey, L"shell\\open\\command", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL,
+                       &hSubKey, NULL) == ERROR_SUCCESS) {
+        swprintf(wstr, L"\"%ls\" \"%%1\"", progName);
+        if (RegSetValueEx(hSubKey, L"Default", 0, REG_SZ, (LPBYTE)wstr,
+                          (DWORD)(wcslen(wstr) * sizeof(wchar_t))) != ERROR_SUCCESS) {
+            RegCloseKey(hSubKey);
+            RegCloseKey(hKey);
+            return -1;
+        }
+    }
+    else {
+        RegCloseKey(hKey);
+        return -1;
+    }
+    RegCloseKey(hSubKey);
+
+    RegCloseKey(hKey);
+    done = 1;
+    return 0;
+}
+
+int
+WinCEShell_CheckHash(char *exe_hash)
+{
+    _wince_hash_checked = 1;
+
+    if (!strcmp(WinCEShell_DllHash, exe_hash))
+        return 1;
+
+    // Hashes conflict.
+    MessageBox(NULL, L"different hash for exe and dll", L"ERROR", MB_OK);
+    return 0;
 }
 
 int
 WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, int nCmdShow)
 {
+    if (!_wince_hash_checked) {
+        MessageBox(NULL, L"hash not checked", L"ERROR", MB_OK);
+        return -1;
+    }
+
     DWORD dwThId;
     int exitcode;
-    char *result;
     char *prefix = "";
+    wchar_t env_ini[PATH_MAX + 1];
 
     WINCE_SHELL_ARGS shellArgs = {0};
 
     PyOS_ReadlineFunctionPointer = &WinCEShell_readline;  // defined at Parser/myreadline.c
 
-    ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, L"initializedEv");
-    ghFinalizeEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeEv");
-    ghFinalizeDoneEv = CreateEvent(NULL, TRUE, FALSE, L"finalizeDoneEv");
+    if (atexit(WinCEShell_CleanUp)) {
+        MessageBox(NULL, L"Could not register cleanup function with atexit", L"ERROR", MB_OK);
+        return -1;
+    }
+
+    if (!GetModuleFileName(NULL, env_ini, MAX_PATH + 1)) {
+        return -1;
+    }
+    char *c;
+    c = wcsrchr(env_ini, L'\\');
+    if (c == NULL) {
+        c = env_ini[0];
+    }
+    *c = L'\0';
+    if (PathCchCombineEx(env_ini, MAX_PATH + 1, env_ini, L"environ.ini", 0) == S_OK)
+        WinCEShell_LoadEnvFromFile(env_ini);
+
+    wince_environ = _env;
+    wince_wenviron = _wenv;
+
+    // Registry
+    char *associateReg = wince_getenv("PYTHONASSOCIATEREG");
+    if (associateReg != NULL && strcmp(associateReg, "1") == 0) {
+        if (WinCEShell_SetupRegistry() < 0)
+            MessageBox(NULL, L"failed to setup registry", L"WARNING", MB_OK);
+    }
+
+    ghInitializedEv = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ghPythonDoneEv = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     if (showConsole) {
         hTh = CreateThread(NULL, 0, WinCEShell, hCurInst, 0, &dwThId);
@@ -896,9 +1415,6 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     WaitForSingleObject(ghInitializedEv, INFINITE);
 
     wargv = CommandLineToArgvW(GetCommandLine(), &argc);
-    if (Py_AtExit(&WinCEShell_Cleanup) < 0)
-        MessageBox(NULL, L"Py_AtExit returned -1 so cleanup will not work correctly.", L"WARNING",
-                   MB_OK);
 
     if (wargv == NULL) {
         MessageBox(NULL, L"Failed to parse the command line", L"ERROR", MB_OK);
@@ -911,9 +1427,10 @@ WinCEShell_WinMain(HINSTANCE hCurInst, HINSTANCE hPrevInst, LPWSTR lpsCmdLine, i
     if (exitcode)
         MessageBox(NULL, L"returned code was not 0", L"ERROR", MB_OK);
 
+    Exited = 1;
+    SetEvent(ghPythonDoneEv);
+    PostMessage(hConsoleWindow, WM_CLOSE, 0, 0);
     WaitForSingleObject(hTh, INFINITE);
     CloseHandle(hTh);
-    free(history);
-    free(result);
     return 0;
 }

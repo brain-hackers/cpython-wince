@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define abort() exit(999)
+
 /* General debugging routines */
 
 void ffi_stop_here(void)

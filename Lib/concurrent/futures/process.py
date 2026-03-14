@@ -598,13 +598,13 @@ class ProcessPoolExecutor(_base.Executor):
 
         if max_workers is None:
             self._max_workers = os.cpu_count() or 1
-            if sys.platform == 'win32':
+            if sys.platform in ('win32', 'wince'):
                 self._max_workers = min(_MAX_WINDOWS_WORKERS,
                                         self._max_workers)
         else:
             if max_workers <= 0:
                 raise ValueError("max_workers must be greater than 0")
-            elif (sys.platform == 'win32' and
+            elif (sys.platform in ('win32', 'wince') and
                 max_workers > _MAX_WINDOWS_WORKERS):
                 raise ValueError(
                     f"max_workers must be <= {_MAX_WINDOWS_WORKERS}")

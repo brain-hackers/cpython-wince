@@ -269,7 +269,7 @@ shutdown(how) -- shut down traffic in one or both directions\n\
 # endif
 
 /* Macros based on the IPPROTO enum, see: https://bugs.python.org/issue29515 */
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
 #define IPPROTO_ICMP IPPROTO_ICMP
 #define IPPROTO_IGMP IPPROTO_IGMP
 #define IPPROTO_GGP IPPROTO_GGP
@@ -306,7 +306,46 @@ shutdown(how) -- shut down traffic in one or both directions\n\
 /* Provides the IsWindows7SP1OrGreater() function */
 #include <versionhelpers.h>
 #else
-#define IsWindow7SP1OrGreater() (FALSE)
+#define IF_NAMESIZE	16 // FIXME-WINCE: is this correct? The value 16 comes from linux header.
+
+#define HAVE_INET_NTOP 1
+// HAVE_INET_PTON is already set to 1 by PC/pyconfig.h
+
+int
+inet_pton(int af, const char *src, void *dst)
+{
+	if (af == AF_INET) {
+		long packed_addr;
+		packed_addr = inet_addr(src);
+		if (packed_addr == INADDR_NONE)
+			return 0;
+		memcpy(dst, &packed_addr, 4);
+		return 1;
+	}
+	/* Should set errno to EAFNOSUPPORT */
+	//errno = EAFNOSUPPORT;
+	return 1;
+}
+
+const char *
+inet_ntop(int af, const void *src, char *dst, socklen_t size)
+{
+	if (af == AF_INET) {
+		struct in_addr packed_addr;
+		if (size < 16)
+			/* Should set errno to ENOSPC. */
+			//errno = ENOSPC;
+			return NULL;
+		memcpy(&packed_addr, src, sizeof(packed_addr));
+		return strncpy(dst, inet_ntoa(packed_addr), size);
+	}
+	/* Should set errno to EAFNOSUPPORT */
+	//errno = EAFNOSUPPORT;
+	return NULL;
+}
+
+#define if_nametoindex(i) (0)
+#define if_indextoname(i, name) (NULL)
 #endif
 // For if_nametoindex() and if_indextoname()
 #include <iphlpapi.h>
@@ -333,14 +372,17 @@ static int
 remove_unusable_flags(PyObject *m)
 {
     PyObject *dict;
+#ifndef MS_WINCE
     OSVERSIONINFOEX info;
     DWORDLONG dwlConditionMask;
+#endif
 
     dict = PyModule_GetDict(m);
     if (dict == NULL) {
         return -1;
     }
 
+#ifndef MS_WINCE
     /* set to Windows 10, except BuildNumber. */
     memset(&info, 0, sizeof(info));
     info.dwOSVersionInfoSize = sizeof(info);
@@ -352,8 +394,10 @@ remove_unusable_flags(PyObject *m)
     VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
     VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
     VER_SET_CONDITION(dwlConditionMask, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+#endif
 
     for (int i=0; i<sizeof(win_runtime_flags)/sizeof(FlagRuntimeInfo); i++) {
+#ifndef MS_WINCE
         info.dwBuildNumber = win_runtime_flags[i].build_number;
         /* greater than or equal to the specified version?
            Compatibility Mode will not cheat VerifyVersionInfo(...) */
@@ -363,7 +407,9 @@ remove_unusable_flags(PyObject *m)
                 dwlConditionMask)) {
             break;
         }
-        else {
+        else
+#endif
+        {
             PyObject *flag_name = PyUnicode_FromString(win_runtime_flags[i].flag_name);
             if (flag_name == NULL) {
                 return -1;
@@ -485,7 +531,9 @@ remove_unusable_flags(PyObject *m)
 #ifdef MS_WINDOWS
 #define sockaddr_rc SOCKADDR_BTH_REDEF
 
+#ifndef MS_WINCE
 #define USE_BLUETOOTH 1
+#endif // FIXME-WINCE: Bluetooth with Windows CE?
 #define AF_BLUETOOTH AF_BTH
 #define BTPROTO_RFCOMM BTHPROTO_RFCOMM
 #define _BT_RC_MEMB(sa, memb) ((sa)->memb)
@@ -590,8 +638,13 @@ select_error(void)
 #endif
 
 #ifdef MS_WINDOWS
+#ifndef MS_WINCE
 /* Does WSASocket() support the WSA_FLAG_NO_HANDLE_INHERIT flag? */
 static int support_wsa_no_inherit = -1;
+#else
+/* Windows CE does not support WSA_FLAG_NO_HANDLE_INHERIT */
+static int support_wsa_no_inherit = 0;
+#endif
 #endif
 
 /* Convenience function to raise an error according to errno
@@ -2740,12 +2793,14 @@ sock_accept(PySocketSockObject *s, PyObject *Py_UNUSED(ignored))
         return NULL;
     newfd = ctx.result;
 
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     if (!SetHandleInformation((HANDLE)newfd, HANDLE_FLAG_INHERIT, 0)) {
         PyErr_SetFromWindowsErr(0);
         SOCKETCLOSE(newfd);
         goto finally;
     }
+#elif defined(MS_WINCE)
+	// Windows CE does not support SetHandleInformation.
 #else
 
 #if defined(HAVE_ACCEPT4) && defined(SOCK_CLOEXEC)
@@ -4896,7 +4951,11 @@ sock_share(PySocketSockObject *s, PyObject *arg)
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
+#ifndef MS_WINCE
     result = WSADuplicateSocketW(s->sock_fd, processId, &info);
+#else
+    result = SOCKET_ERROR;
+#endif
     Py_END_ALLOW_THREADS
     if (result == SOCKET_ERROR)
         return set_error();
@@ -5276,6 +5335,7 @@ sock_initobj(PyObject *self, PyObject *args, PyObject *kwds)
             set_error();
             return -1;
         }
+#ifndef MS_WINCE
 
         if (!support_wsa_no_inherit) {
             if (!SetHandleInformation((HANDLE)fd, HANDLE_FLAG_INHERIT, 0)) {
@@ -5284,6 +5344,7 @@ sock_initobj(PyObject *self, PyObject *args, PyObject *kwds)
                 return -1;
             }
         }
+#endif
 #else
         /* UNIX */
         Py_BEGIN_ALLOW_THREADS
@@ -5393,7 +5454,7 @@ socket_gethostname(PyObject *self, PyObject *unused)
         return NULL;
     }
 
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     /* Don't use winsock's gethostname, as this returns the ANSI
        version of the hostname, whereas we need a Unicode string.
        Otherwise, gethostname apparently also returns the DNS name. */
@@ -5976,7 +6037,7 @@ socket_dup(PyObject *self, PyObject *fdobj)
     if (fd == (SOCKET_T)(-1) && PyErr_Occurred())
         return NULL;
 
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     if (WSADuplicateSocketW(fd, GetCurrentProcessId(), &info))
         return set_error();
 
@@ -5991,6 +6052,8 @@ socket_dup(PyObject *self, PyObject *fdobj)
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
+#elif defined(MS_WINCE)
+    return set_error();
 #else
     /* On UNIX, dup can be used to duplicate the file descriptor of a socket */
     newfd = _Py_dup(fd);
@@ -6724,7 +6787,7 @@ socket_if_nameindex(PyObject *self, PyObject *arg)
     if (list == NULL) {
         return NULL;
     }
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     PMIB_IF_TABLE2 tbl;
     int ret;
     if ((ret = GetIfTable2Ex(MibIfTableRaw, &tbl)) != NO_ERROR) {
@@ -6752,6 +6815,28 @@ socket_if_nameindex(PyObject *self, PyObject *arg)
         Py_DECREF(tuple);
     }
     FreeMibTable(tbl);
+    return list;
+#elif defined(MS_WINCE)
+    PMIB_IFTABLE tbl;
+    ULONG tblSize = sizeof(tbl);
+    int ret;
+    if ((ret = GetIfTable(&tbl, &tblSize, FALSE)) != NO_ERROR) {
+        Py_DECREF(list);
+        // ret is used instead of GetLastError()
+        return PyErr_SetFromWindowsErr(ret);
+    }
+    for (ULONG i = 0; i < tbl->dwNumEntries; ++i) {
+        MIB_IFROW r = tbl->table[i];
+        PyObject *tuple = Py_BuildValue("Iu", r.dwIndex, r.wszName);
+        if (tuple == NULL || PyList_Append(list, tuple) == -1) {
+            Py_XDECREF(tuple);
+            Py_DECREF(list);
+            free(tbl);
+            return NULL;
+        }
+        Py_DECREF(tuple);
+    }
+    free(tbl);
     return list;
 #else
     int i;
@@ -6807,7 +6892,7 @@ static PyObject *
 socket_if_nametoindex(PyObject *self, PyObject *args)
 {
     PyObject *oname;
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     NET_IFINDEX index;
 #else
     unsigned long index;
@@ -6835,7 +6920,7 @@ Returns the interface index corresponding to the interface name if_name.");
 static PyObject *
 socket_if_indextoname(PyObject *self, PyObject *arg)
 {
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     NET_IFINDEX index;
 #else
     unsigned long index;
@@ -7118,7 +7203,7 @@ PyInit__socket(void)
     if (!os_init())
         return NULL;
 
-#ifdef MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     if (support_wsa_no_inherit == -1) {
         support_wsa_no_inherit = IsWindows7SP1OrGreater();
     }
@@ -7958,7 +8043,7 @@ PyInit__socket(void)
     PyModule_AddIntMacro(m, IPPROTO_MAX);
 #endif
 
-#ifdef  MS_WINDOWS
+#if defined(MS_WINDOWS) && !defined(MS_WINCE)
     PyModule_AddIntMacro(m, IPPROTO_ICLFXBM);
     PyModule_AddIntMacro(m, IPPROTO_ST);
     PyModule_AddIntMacro(m, IPPROTO_CBT);

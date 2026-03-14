@@ -718,8 +718,8 @@ else:
 
 
 # Win9x family and earlier have no Unicode filename support.
-supports_unicode_filenames = (hasattr(sys, "getwindowsversion") and
-                              sys.getwindowsversion()[3] >= 2)
+supports_unicode_filenames = (sys.platform.startswith("wince") or (hasattr(sys, "getwindowsversion") and
+                              sys.getwindowsversion()[3] >= 2))
 
 def relpath(path, start=None):
     """Return a relative version of a path"""
